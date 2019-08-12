@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.bitbucket.mstrobel:procyon:0.5.33">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bitbucket/mstrobel/procyon/0.5.33/procyon-0.5.33.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bitbucket/mstrobel/procyon/0.5.33/procyon-0.5.33-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bitbucket/mstrobel/procyon/0.5.33/procyon-0.5.33-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
