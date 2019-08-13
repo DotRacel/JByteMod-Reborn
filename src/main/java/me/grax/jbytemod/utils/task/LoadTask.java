@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 
 import javax.swing.SwingWorker;
 
+import me.grax.jbytemod.discord.Discord;
 import org.apache.commons.io.IOUtils;
 import org.apache.tools.zip.ZipEntry;
 import org.apache.tools.zip.ZipFile;
@@ -30,6 +31,7 @@ public class LoadTask extends SwingWorker<Void, Integer> {
 	private ZipFile input;
 	private PageEndPanel jpb;
 	private JByteMod jbm;
+	private File file;
 	private int jarSize; // including directories
 	private int loaded;
 	private JarArchive ja;
@@ -43,6 +45,7 @@ public class LoadTask extends SwingWorker<Void, Integer> {
 			this.jbm = jbm;
 			this.jpb = jbm.getPP();
 			this.ja = ja;
+			this.file = input;
 			// clean old cache
 			// ja.setClasses(null);
 			this.maxMem = Runtime.getRuntime().maxMemory();
@@ -162,12 +165,15 @@ public class LoadTask extends SwingWorker<Void, Integer> {
 	@Override
 	protected void process(List<Integer> chunks) {
 		int i = chunks.get(chunks.size() - 1);
+		Discord.updatePresence("Loading " + file.getName() + " (" + i + "%)", "");
 		jpb.setValue(i);
 		super.process(chunks);
 	}
 
 	@Override
 	protected void done() {
+		JByteMod.lastEditFile = file.getName();
+		Discord.updatePresence("Working on " + file.getName(), "Idle ...");
 		JByteMod.LOGGER.log("Successfully loaded file!");
 		jbm.refreshTree();
 	}
