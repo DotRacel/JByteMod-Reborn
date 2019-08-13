@@ -10,6 +10,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
 
+import me.grax.jbytemod.discord.Discord;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -131,6 +132,8 @@ public class MyEditorTab extends JPanel {
   }
 
   public void selectClass(ClassNode cn) {
+    Discord.updatePresence("Working on " + JByteMod.lastEditFile, "Editing " + cn.name);
+
     if (decompilerBtn.isSelected()) {
       decompiler.decompile(cn, null, false);
     }
@@ -141,6 +144,8 @@ public class MyEditorTab extends JPanel {
   }
 
   public void selectMethod(ClassNode cn, MethodNode mn) {
+    Discord.updatePresence("Working on " + JByteMod.lastEditFile, "Editing " + cn.name + "." + mn.name);
+
     if (decompilerBtn.isSelected()) {
       decompiler.decompile(cn, mn, false);
     }
