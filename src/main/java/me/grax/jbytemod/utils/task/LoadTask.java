@@ -114,14 +114,12 @@ public class LoadTask extends SwingWorker<Void, Integer> {
 									classes.put(cn.name, cn);
 								}
 							} catch (IllegalArgumentException e) {
-								JByteMod.LOGGER.err("Failed loading class file " + name + ", maybe paramorphism?");
 								synchronized (otherFiles) {
 									otherFiles.put(name, bytes);
 								}
 							}
 						}
 					}catch (ArrayIndexOutOfBoundsException ex){
-						JByteMod.LOGGER.err("Failed loading class file " + name + ", array index out of bounds " + bytes.length + ", maybe paramorphism ?");
 						synchronized (otherFiles) {
 							otherFiles.put(name, bytes);
 						}
