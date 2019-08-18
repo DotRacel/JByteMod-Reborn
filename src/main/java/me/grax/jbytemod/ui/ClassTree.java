@@ -165,6 +165,7 @@ public class ClassTree extends JTree implements IDropUser {
             SortedTreeNode stn = (SortedTreeNode) ClassTree.this.getLastSelectedPathComponent();
             MethodNode mn = stn.getMn();
             ClassNode cn = stn.getCn();
+
             if (mn != null) {
               //method selected
               JPopupMenu menu = new JPopupMenu();
@@ -176,6 +177,13 @@ public class ClassTree extends JTree implements IDropUser {
                 }
               });
               menu.add(edit);
+              JMenuItem search = new JMenuItem(JByteMod.res.getResource("search"));
+              search.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                  jbm.getSearchList().searchForFMInsn(cn.name, mn.name, mn.desc, false, false);
+                }
+              });
+              menu.add(search);
               JMenuItem remove = new JMenuItem(JByteMod.res.getResource("remove"));
               remove.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
@@ -243,6 +251,7 @@ public class ClassTree extends JTree implements IDropUser {
                 }
               });
               menu.add(insert);
+
               JMenuItem edit = new JMenuItem(JByteMod.res.getResource("edit"));
               edit.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
