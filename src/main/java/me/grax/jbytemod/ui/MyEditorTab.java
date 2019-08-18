@@ -40,7 +40,7 @@ public class MyEditorTab extends JPanel {
     setLayout(new BorderLayout());
     this.center = new JPanel();
     center.setLayout(new GridLayout());
-    this.label = new JLabel("Test");
+    this.label = new JLabel("JByte Mod");
 
     this.codeEditor = new MyCodeEditor(jbm, label);
     jbm.setCodeList(codeEditor.getEditor());
