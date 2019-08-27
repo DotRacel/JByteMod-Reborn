@@ -37,9 +37,11 @@ public class LoadTask extends SwingWorker<Void, Integer> {
 	private JarArchive ja;
 	private long maxMem;
 	private boolean memoryWarning;
+	private long startTime;
 
 	public LoadTask(JByteMod jbm, File input, JarArchive ja) {
 		try {
+			this.startTime = System.currentTimeMillis();
 			this.jarSize = countFiles(this.input = new ZipFile(input, "UTF-8"));
 			JByteMod.LOGGER.log(jarSize + " files to load!");
 			this.jbm = jbm;
@@ -174,5 +176,7 @@ public class LoadTask extends SwingWorker<Void, Integer> {
 		Discord.updatePresence("Working on " + file.getName(), "Idle ...");
 		JByteMod.LOGGER.log("Successfully loaded file!");
 		jbm.refreshTree();
+		JByteMod.LOGGER.log("Tree refreshed.");
+		JByteMod.LOGGER.log("Loaded classes in " + (System.currentTimeMillis() - startTime) + "ms");
 	}
 }
