@@ -12,6 +12,8 @@ import java.util.Map;
 
 import org.benf.cfr.reader.PluginRunner;
 import org.benf.cfr.reader.api.ClassFileSource;
+import org.benf.cfr.reader.apiunreleased.ClassFileSource2;
+import org.benf.cfr.reader.apiunreleased.JarContent;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.Pair;
 import org.benf.cfr.reader.entities.ClassFile;
 import org.benf.cfr.reader.entities.Method;
@@ -88,7 +90,6 @@ public class CFRDecompiler extends Decompiler {
     options.put("tidymonitors", "true");
     options.put("usenametable", "true");
   }
-
   public String decompile(byte[] b, MethodNode mn) {
     try {
       HashMap<String, String> ops = new HashMap<>();
@@ -96,7 +97,12 @@ public class CFRDecompiler extends Decompiler {
       for (String key : options.keySet()) {
         ops.put(key, String.valueOf(JByteMod.ops.get("cfr_" + key).getBoolean()));
       }
-      ClassFileSource cfs = new ClassFileSource() {
+      ClassFileSource2 cfs = new ClassFileSource2() {
+
+        @Override
+        public JarContent addJarContent(String s) {
+          return null;
+        }
 
         @Override
         public void informAnalysisRelativePathDetail(String a, String b) {
@@ -140,7 +146,7 @@ public class CFRDecompiler extends Decompiler {
       }
       String decompilation = runner.getDecompilationFor(cn.name);
       System.gc(); //cfr has a performance bug
-      return decompilation.substring(37); //small hack to remove watermark
+      return decompilation;
     } catch (Exception e) {
       e.printStackTrace();
       StringWriter sw = new StringWriter();
@@ -150,7 +156,7 @@ public class CFRDecompiler extends Decompiler {
     }
   }
 
-  private static DCCommonState initDCState(Map<String, String> optionsMap, ClassFileSource classFileSource) {
+  private static DCCommonState initDCState(Map<String, String> optionsMap, ClassFileSource2 classFileSource) {
     OptionsImpl options = new OptionsImpl(optionsMap);
     if (classFileSource == null) classFileSource = new ClassFileSourceImpl(options);
     DCCommonState dcCommonState = new DCCommonState(options, classFileSource);
