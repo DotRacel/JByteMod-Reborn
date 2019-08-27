@@ -496,9 +496,10 @@ public class MyMenuBar extends JMenuBar {
 		// I don't know why this can get none
 		// List<VirtualMachineDescriptor> list = VirtualMachine.list();
 		// Windows Only....
-		List<VirtualMachineDescriptor> list = new WindowsAttachProvider().listVirtualMachines();
-		VirtualMachine vm = null;
 		try {
+			List<VirtualMachineDescriptor> list = new WindowsAttachProvider().listVirtualMachines();
+			VirtualMachine vm = null;
+
 			if (list.isEmpty()) {
 				String pid = JOptionPane.showInputDialog(JByteMod.res.getResource("no_vm_found"));
 				if (pid != null && !pid.isEmpty()) {
@@ -514,6 +515,8 @@ public class MyMenuBar extends JMenuBar {
 			if (vm != null) {
 				jbm.attachTo(vm);
 			}
+		} catch (UnsatisfiedLinkError exception){
+			JOptionPane.showMessageDialog(null, "Failed to attach. Please use JDK as runtime.");
 		} catch (Throwable t) {
 			if (t.getMessage() != null) {
 				JOptionPane.showMessageDialog(null, "<" + t.getMessage() + "> " + JByteMod.res.getResource("attach_error"));
