@@ -532,7 +532,12 @@ public class MyCodeList extends JList<InstrEntry> {
       });
       menu.add(add);
     }
-    menu.show(jbm, (int) jbm.getMousePosition().getX(), (int) jbm.getMousePosition().getY());
+    try{
+      menu.show(jbm, (int) jbm.getMousePosition().getX(), (int) jbm.getMousePosition().getY());
+    }catch(NullPointerException exception){
+      JByteMod.LOGGER.println("Null mouse position, weird. :/");
+    }
+
   }
 
   protected void addPopupListener(JPopupMenu menu) {
