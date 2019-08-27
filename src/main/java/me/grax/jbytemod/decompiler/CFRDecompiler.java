@@ -146,7 +146,7 @@ public class CFRDecompiler extends Decompiler {
       }
       String decompilation = runner.getDecompilationFor(cn.name);
       System.gc(); //cfr has a performance bug
-      return decompilation;
+      return decompilation.substring(37);
     } catch (Exception e) {
       e.printStackTrace();
       StringWriter sw = new StringWriter();
