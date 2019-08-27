@@ -48,7 +48,7 @@ public class PrintStreamLogger extends IFernflowerLogger {
   @Override
   public void startReadingClass(String className) {
     if (accepts(Severity.INFO)) {
-      writeMessage("Decompiling class " + className, Severity.INFO);
+      //writeMessage("Decompiling class " + className, Severity.INFO);
       ++indent;
     }
   }
@@ -57,14 +57,14 @@ public class PrintStreamLogger extends IFernflowerLogger {
   public void endReadingClass() {
     if (accepts(Severity.INFO)) {
       --indent;
-      writeMessage("... done", Severity.INFO);
+      //writeMessage("... done", Severity.INFO);
     }
   }
 
   @Override
   public void startClass(String className) {
     if (accepts(Severity.INFO)) {
-      writeMessage("Processing class " + className, Severity.TRACE);
+      //writeMessage("Processing class " + className, Severity.TRACE);
       ++indent;
     }
   }
@@ -73,14 +73,14 @@ public class PrintStreamLogger extends IFernflowerLogger {
   public void endClass() {
     if (accepts(Severity.INFO)) {
       --indent;
-      writeMessage("... proceeded", Severity.TRACE);
+      //writeMessage("... proceeded", Severity.TRACE);
     }
   }
 
   @Override
   public void startMethod(String methodName) {
     if (accepts(Severity.INFO)) {
-      writeMessage("Processing method " + methodName, Severity.TRACE);
+      //writeMessage("Processing method " + methodName, Severity.TRACE);
       ++indent;
     }
   }
@@ -88,14 +88,14 @@ public class PrintStreamLogger extends IFernflowerLogger {
   public void endMethod() {
     if (accepts(Severity.INFO)) {
       --indent;
-      writeMessage("... proceeded", Severity.TRACE);
+      //writeMessage("... proceeded", Severity.TRACE);
     }
   }
 
   @Override
   public void startWriteClass(String className) {
     if (accepts(Severity.INFO)) {
-      writeMessage("Writing class " + className, Severity.TRACE);
+      //writeMessage("Writing class " + className, Severity.TRACE);
       ++indent;
     }
   }
@@ -104,7 +104,7 @@ public class PrintStreamLogger extends IFernflowerLogger {
   public void endWriteClass() {
     if (accepts(Severity.INFO)) {
       --indent;
-      writeMessage("... written", Severity.TRACE);
+      //writeMessage("... written", Severity.TRACE);
     }
   }
 }
