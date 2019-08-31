@@ -146,7 +146,7 @@ public class CFRDecompiler extends Decompiler {
       }
       String decompilation = runner.getDecompilationFor(cn.name);
       System.gc(); //cfr has a performance bug
-      return decompilation.substring(37);
+      return hackWaterMark(decompilation);
     } catch (Exception e) {
       e.printStackTrace();
       StringWriter sw = new StringWriter();
@@ -175,5 +175,9 @@ public class CFRDecompiler extends Decompiler {
       return Pair.make(baos.toByteArray(), name);
     }
     return null;
+  }
+
+  private static String hackWaterMark(String string){
+    return string.contains("<Could not determine version>") ? string.substring(61) : string.substring(37);
   }
 }
