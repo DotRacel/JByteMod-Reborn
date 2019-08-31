@@ -364,11 +364,13 @@ final class MethodWriter extends MethodVisitor {
 
   /**
    * The last runtime visible type annotation of the Code attribute. The previous ones can be
+   * accessed with the {@link AnnotationWriter#previousAnnotation} field. May be {@literal null}.
    */
   private AnnotationWriter lastCodeRuntimeVisibleTypeAnnotation;
 
   /**
    * The last runtime invisible type annotation of the Code attribute. The previous ones can be
+   * accessed with the {@link AnnotationWriter#previousAnnotation} field. May be {@literal null}.
    */
   private AnnotationWriter lastCodeRuntimeInvisibleTypeAnnotation;
 
@@ -396,11 +398,13 @@ final class MethodWriter extends MethodVisitor {
 
   /**
    * The last runtime visible annotation of this method. The previous ones can be accessed with the
+   * {@link AnnotationWriter#previousAnnotation} field. May be {@literal null}.
    */
   private AnnotationWriter lastRuntimeVisibleAnnotation;
 
   /**
    * The last runtime invisible annotation of this method. The previous ones can be accessed with
+   * the {@link AnnotationWriter#previousAnnotation} field. May be {@literal null}.
    */
   private AnnotationWriter lastRuntimeInvisibleAnnotation;
 
@@ -410,6 +414,7 @@ final class MethodWriter extends MethodVisitor {
   /**
    * The runtime visible parameter annotations of this method. Each array element contains the last
    * annotation of a parameter (which can be {@literal null} - the previous ones can be accessed
+   * with the {@link AnnotationWriter#previousAnnotation} field). May be {@literal null}.
    */
   private AnnotationWriter[] lastRuntimeVisibleParameterAnnotations;
 
@@ -418,16 +423,20 @@ final class MethodWriter extends MethodVisitor {
 
   /**
    * The runtime invisible parameter annotations of this method. Each array element contains the
+   * last annotation of a parameter (which can be {@literal null} - the previous ones can be
+   * accessed with the {@link AnnotationWriter#previousAnnotation} field). May be {@literal null}.
    */
   private AnnotationWriter[] lastRuntimeInvisibleParameterAnnotations;
 
   /**
    * The last runtime visible type annotation of this method. The previous ones can be accessed with
+   * the {@link AnnotationWriter#previousAnnotation} field. May be {@literal null}.
    */
   private AnnotationWriter lastRuntimeVisibleTypeAnnotation;
 
   /**
    * The last runtime invisible type annotation of this method. The previous ones can be accessed
+   * with the {@link AnnotationWriter#previousAnnotation} field. May be {@literal null}.
    */
   private AnnotationWriter lastRuntimeInvisibleTypeAnnotation;
 
@@ -524,6 +533,8 @@ final class MethodWriter extends MethodVisitor {
    * the number of stack elements. The local variables start at index 3 and are followed by the
    * operand stack elements. In summary frame[0] = offset, frame[1] = numLocal, frame[2] = numStack.
    * Local variables and operand stack entries contain abstract types, as defined in {@link Frame},
+   * but restricted to {@link Frame#CONSTANT_KIND}, {@link Frame#REFERENCE_KIND} or {@link
+   * Frame#UNINITIALIZED_KIND} abstract types. Long and double types use only one array entry.
    */
   private int[] currentFrame;
 
@@ -2061,7 +2072,7 @@ final class MethodWriter extends MethodVisitor {
    *
    * @return the size in bytes of the method_info JVMS structure.
    */
-  int computeMethodInfoSize(final int majorVersion, final int minorVersion) {
+  int computeMethodInfoSize() {
     // If this method_info must be copied from an existing one, the size computation is trivial.
     if (sourceOffset != 0) {
       // sourceLength excludes the first 6 bytes for access_flags, name_index and descriptor_index.
@@ -2078,13 +2089,7 @@ final class MethodWriter extends MethodVisitor {
       symbolTable.addConstantUtf8(Constants.CODE);
       // The Code attribute has 6 header bytes, plus 2, 2, 4 and 2 bytes respectively for max_stack,
       // max_locals, code_length and attributes_count, plus the bytecode and the exception table.
-      //
-      // or if pre-J1, 1, 1, 2, 2
-      if (majorVersion == 45 && minorVersion <= 2) {
-        size += 12 + code.length + Handler.getExceptionTableSize(firstHandler);
-      } else {
-        size += 16 + code.length + Handler.getExceptionTableSize(firstHandler);
-      }
+      size += 16 + code.length + Handler.getExceptionTableSize(firstHandler);
       if (stackMapTableEntries != null) {
         boolean useStackMapTable = symbolTable.getMajorVersion() >= Opcodes.V1_6;
         symbolTable.addConstantUtf8(useStackMapTable ? Constants.STACK_MAP_TABLE : "StackMap");
@@ -2172,7 +2177,7 @@ final class MethodWriter extends MethodVisitor {
    *
    * @param output where the method_info structure must be put.
    */
-  void putMethodInfo(final ByteVector output, int majorVersion, int minorVersion) {
+  void putMethodInfo(final ByteVector output) {
     boolean useSyntheticAttribute = symbolTable.getMajorVersion() < Opcodes.V1_5;
     int mask = useSyntheticAttribute ? Opcodes.ACC_SYNTHETIC : 0;
     output.putShort(accessFlags & ~mask).putShort(nameIndex).putShort(descriptorIndex);
@@ -2230,15 +2235,7 @@ final class MethodWriter extends MethodVisitor {
     if (code.length > 0) {
       // 2, 2, 4 and 2 bytes respectively for max_stack, max_locals, code_length and
       // attributes_count, plus the bytecode and the exception table.
-      //
-      // or in the case of pre-j1: 1, 1, 2, 2, bytes respectibely
-      int size;
-      if (majorVersion == 45 && minorVersion <= 2) {
-        size = 6 + code.length + Handler.getExceptionTableLength(firstHandler);
-      } else {
-        size = 10 + code.length + Handler.getExceptionTableSize(firstHandler);
-      }
-
+      int size = 10 + code.length + Handler.getExceptionTableSize(firstHandler);
       int codeAttributeCount = 0;
       if (stackMapTableEntries != null) {
         // 6 header bytes and 2 bytes for number_of_entries.
@@ -2278,23 +2275,13 @@ final class MethodWriter extends MethodVisitor {
                 symbolTable, code.data, code.length, maxStack, maxLocals);
         codeAttributeCount += firstCodeAttribute.getAttributeCount();
       }
-      if (majorVersion == 45 && minorVersion <= 2) {
-        output
-                .putShort(symbolTable.addConstantUtf8(Constants.CODE))
-                .putInt(size)
-                .putShort(maxStack)
-                .putShort(maxLocals)
-                .putInt(code.length)
-                .putByteArray(code.data, 0, code.length);
-      } else {
-        output
-                .putShort(symbolTable.addConstantUtf8(Constants.CODE))
-                .putInt(size)
-                .putByte(maxStack)
-                .putByte(maxLocals)
-                .putShort(code.length)
-                .putByteArray(code.data, 0, code.length);
-      }
+      output
+          .putShort(symbolTable.addConstantUtf8(Constants.CODE))
+          .putInt(size)
+          .putShort(maxStack)
+          .putShort(maxLocals)
+          .putInt(code.length)
+          .putByteArray(code.data, 0, code.length);
       Handler.putExceptionTable(firstHandler, output);
       output.putShort(codeAttributeCount);
       if (stackMapTableEntries != null) {
