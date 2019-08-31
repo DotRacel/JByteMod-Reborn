@@ -85,7 +85,6 @@ public class DominatorEngine {
         Integer idom = null;
 
         List<StatEdge> preEdges = stat.getAllPredecessorEdges();
-        System.out.print(preEdges);
         for (StatEdge edge : preEdges) {
           if (colOrderedIDoms.getWithKey(edge.getSource().id) != null) {
             idom = getCommonIDom(idom, edge.getSource().id, colOrderedIDoms);
