@@ -1308,10 +1308,24 @@ public class ClassReader {
     // Read the max_stack, max_locals and code_length fields.
     final byte[] classBuffer = classFileBuffer;
     final char[] charBuffer = context.charBuffer;
-    final int maxStack = readUnsignedShort(currentOffset);
-    final int maxLocals = readUnsignedShort(currentOffset + 2);
-    final int codeLength = readInt(currentOffset + 4);
-    currentOffset += 8;
+    final int majorVersion = readUnsignedShort(6);
+    final int minorVersion = readUnsignedShort(4);
+
+    final int maxStack;
+    final int maxLocals;
+    final int codeLength;
+
+    if (majorVersion == 45 && minorVersion <= 2) {
+      maxStack = readByte(currentOffset);
+      maxLocals = readByte(currentOffset + 1);
+      codeLength = readUnsignedShort(currentOffset + 2);
+      currentOffset += 4;
+    } else {
+      maxStack = readUnsignedShort(currentOffset);
+      maxLocals = readUnsignedShort(currentOffset + 2);
+      codeLength = readInt(currentOffset + 4);
+      currentOffset += 8;
+    }
 
     // Read the bytecode 'code' array to create a label for each referenced instruction.
     final int bytecodeStartOffset = currentOffset;
