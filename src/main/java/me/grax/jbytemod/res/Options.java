@@ -29,7 +29,8 @@ public class Options {
             new Option("analyze_errors", true, Type.BOOLEAN, "editor"), new Option("simplify_graph", true, Type.BOOLEAN, "graph"),
             new Option("remove_redundant", false, Type.BOOLEAN, "graph"), new Option("max_redundant_input", 2, Type.INT, "graph"),
             new Option("decompile_graph", true, Type.BOOLEAN, "graph"), new Option("primary_color", "#557799", Type.STRING, "color"),
-            new Option("secondary_color", "#995555", Type.STRING, "color"), new Option("use_weblaf", true, Type.BOOLEAN, "style")));
+            new Option("secondary_color", "#995555", Type.STRING, "color"), new Option("use_weblaf", true, Type.BOOLEAN, "style"),
+            new Option("discord_state", true, Type.BOOLEAN)));
 
     public Options() {
         initializeDecompilerOptions();

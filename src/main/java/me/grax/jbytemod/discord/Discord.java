@@ -35,7 +35,7 @@ public class Discord {
         DiscordRichPresence presence = new DiscordRichPresence();
         presence.details = details;
         presence.startTimestamp = startTimestamp;
-        if (!state.equals("")) {
+        if (!state.equals("") && JByteMod.ops.get("discord_state").getBoolean()) {
             presence.state = state;
         }
 
