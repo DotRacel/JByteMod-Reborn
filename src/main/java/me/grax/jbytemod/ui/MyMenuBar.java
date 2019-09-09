@@ -10,6 +10,7 @@ import me.grax.jbytemod.res.Option;
 import me.grax.jbytemod.res.Options;
 import me.grax.jbytemod.ui.dialogue.ClassDialogue;
 import me.grax.jbytemod.ui.lists.entries.SearchEntry;
+import me.grax.jbytemod.utils.DeobfusacteUtils;
 import me.grax.jbytemod.utils.ErrorDisplay;
 import me.grax.jbytemod.utils.TextUtils;
 import me.grax.jbytemod.utils.attach.AttachUtils;
@@ -28,9 +29,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.List;
 
 public class MyMenuBar extends JMenuBar {
@@ -46,23 +45,7 @@ public class MyMenuBar extends JMenuBar {
         this.initFileMenu();
     }
 
-    // From https://github.com/ItzSomebody/Radon/
-    public static boolean hasAnnotations(ClassNode classNode) {
-        return (classNode.visibleAnnotations != null && !classNode.visibleAnnotations.isEmpty())
-                || (classNode.invisibleAnnotations != null && !classNode.invisibleAnnotations.isEmpty());
-    }
 
-    // From https://github.com/ItzSomebody/Radon/
-    public static boolean hasAnnotations(MethodNode methodNode) {
-        return (methodNode.visibleAnnotations != null && !methodNode.visibleAnnotations.isEmpty())
-                || (methodNode.invisibleAnnotations != null && !methodNode.invisibleAnnotations.isEmpty());
-    }
-
-    // From https://github.com/ItzSomebody/Radon/
-    public static boolean hasAnnotations(FieldNode fieldNode) {
-        return (fieldNode.visibleAnnotations != null && !fieldNode.visibleAnnotations.isEmpty())
-                || (fieldNode.invisibleAnnotations != null && !fieldNode.invisibleAnnotations.isEmpty());
-    }
 
     private void initFileMenu() {
         JMenu file = new JMenu(JByteMod.res.getResource("file"));
@@ -340,91 +323,81 @@ public class MyMenuBar extends JMenuBar {
         });
         searchUtils.add(clazz_main);
 
-        // From https://github.com/java-deobfuscator
         JMenuItem signatureFix = new JMenuItem(JByteMod.res.getResource("signaturefix"));
         signatureFix.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(final ActionEvent e) {
-                if (jbm.getFile().getClasses() == null) {
-                    return;
+                if (jbm.getFile().getClasses() != null) {
+                    DeobfusacteUtils.fixSignature(jbm.getFile().getClasses());
+                    JOptionPane.showMessageDialog(null, JByteMod.res.getResource("finish_tip"),
+                            JByteMod.res.getResource("signaturefix"), JOptionPane.INFORMATION_MESSAGE);
+                }else {
+                    canNotFindFile();
                 }
-                try {
-                    for (final ClassNode classNode : jbm.getFile().getClasses().values()) {
-                        if (classNode.signature != null) {
-                            try {
-                                CheckClassAdapter.checkClassSignature(classNode.signature);
-                            } catch (IllegalArgumentException IAE) {
-                                classNode.signature = null;
-                            } catch (Throwable x) {
-                                x.printStackTrace();
-                            }
-                        }
-                        classNode.methods.forEach(methodNode -> {
-                            if (methodNode.signature != null) {
-                                try {
-                                    CheckClassAdapter.checkMethodSignature(methodNode.signature);
-                                } catch (IllegalArgumentException IAE) {
-                                    methodNode.signature = null;
-                                } catch (Throwable x) {
-                                    x.printStackTrace();
-                                }
-                            }
-                        });
-                        classNode.fields.forEach(fieldNode -> {
-                            if (fieldNode.signature != null) {
-                                try {
-                                    CheckClassAdapter.checkFieldSignature(fieldNode.signature);
-                                } catch (IllegalArgumentException IAE) {
-                                    fieldNode.signature = null;
-                                } catch (Throwable x) {
-                                    x.printStackTrace();
-                                }
-                            }
-                        });
-
-                    }
-                } catch (Throwable x) {
-                    x.printStackTrace();
-                }
-                JOptionPane.showMessageDialog(null, JByteMod.res.getResource("finish_tip"),
-                        JByteMod.res.getResource("signaturefix"), JOptionPane.INFORMATION_MESSAGE);
             }
         });
         deobfTools.add(signatureFix);
 
-        // From https://github.com/java-deobfuscator and https://github.com/ItzSomebody/Radon/
-        JMenuItem access_fix = new JMenuItem(JByteMod.res.getResource("accessfixer"));
+        JMenuItem access_fix = new JMenuItem("Synthetic Bridge Fixer");
         access_fix.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(final ActionEvent e) {
-                if (jbm.getFile().getClasses() == null) {
-                    return;
+                if (jbm.getFile().getClasses() != null) {
+                    DeobfusacteUtils.removeSyntheticBridge(jbm.getFile().getClasses());
+                    JOptionPane.showMessageDialog(null, JByteMod.res.getResource("finish_tip"),
+                            "Synthetic Bridge Fixer", JOptionPane.INFORMATION_MESSAGE);
+                }else {
+                    canNotFindFile();
                 }
-                try {
-                    for (final ClassNode classNode : jbm.getFile().getClasses().values()) {
 
-                        if (!hasAnnotations(classNode))
-                            classNode.access &= ~(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_BRIDGE);
-
-                        classNode.methods.forEach(methodNode -> {
-                            if (!(methodNode == null) && !hasAnnotations(methodNode))
-                                methodNode.access &= ~(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_BRIDGE);
-                        });
-                        classNode.fields.forEach(fieldNode -> {
-                            if (!(fieldNode == null) && !hasAnnotations(fieldNode))
-                                fieldNode.access &= ~(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_BRIDGE);
-                        });
-                    }
-                } catch (Throwable x) {
-                    x.printStackTrace();
-                }
-                JOptionPane.showMessageDialog(null, JByteMod.res.getResource("finish_tip"),
-                        JByteMod.res.getResource("accessfixer"), JOptionPane.INFORMATION_MESSAGE);
             }
         });
         deobfTools.add(access_fix);
+
+        JMenuItem linenumber_remove = new JMenuItem(JByteMod.res.getResource("line_number_remove"));
+        linenumber_remove.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                if (jbm.getFile().getClasses() != null) {
+                    DeobfusacteUtils.removeLineNumber(jbm.getFile().getClasses());
+                    JOptionPane.showMessageDialog(null, JByteMod.res.getResource("finish_tip"),
+                            JByteMod.res.getResource("line_number_remove"), JOptionPane.INFORMATION_MESSAGE);
+                }else {
+                    canNotFindFile();
+                }
+            }
+        });
+        deobfTools.add(linenumber_remove);
+
+        JMenuItem local_variable_remove = new JMenuItem(JByteMod.res.getResource("local_variable_remove"));
+        local_variable_remove.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                if (jbm.getFile().getClasses() != null) {
+                    DeobfusacteUtils.removeLocalVariable(jbm.getFile().getClasses());
+                    JOptionPane.showMessageDialog(null, JByteMod.res.getResource("finish_tip"),
+                            JByteMod.res.getResource("local_variable_remove"), JOptionPane.INFORMATION_MESSAGE);
+                }else {
+                    canNotFindFile();
+                }
+            }
+        });
+        deobfTools.add(local_variable_remove);
+
+        JMenuItem illegal_varargs_remove = new JMenuItem(JByteMod.res.getResource("illegal_varargs_remove"));
+        illegal_varargs_remove.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                if (jbm.getFile().getClasses() != null) {
+                    DeobfusacteUtils.removeIllegalVarargs(jbm.getFile().getClasses());
+                    JOptionPane.showMessageDialog(null, JByteMod.res.getResource("finish_tip"),
+                            JByteMod.res.getResource("illegal_varargs_remove"), JOptionPane.INFORMATION_MESSAGE);
+                }else {
+                    canNotFindFile();
+                }
+            }
+        });
+        deobfTools.add(illegal_varargs_remove);
 
         this.add(getSettings());
         JMenu help = new JMenu(JByteMod.res.getResource("help"));
@@ -462,6 +435,11 @@ public class MyMenuBar extends JMenuBar {
 
         help.add(licenses);
         this.add(help);
+    }
+
+    protected void canNotFindFile() {
+        JOptionPane.showMessageDialog(null, "Can't find the target file, are you sure you have loaded the file already?",
+                "Warn", JOptionPane.ERROR_MESSAGE);
     }
 
     protected void openProcessSelection() {
