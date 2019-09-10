@@ -223,25 +223,6 @@ public class MyMenuBar extends JMenuBar {
         JMenu deobfTools = new JMenu(JByteMod.res.getResource("deobf_tools"));
         utils.add(deobfTools);
 
-        // From old version of JbyteMod by Grax
-        JMenuItem sourceRename = new JMenuItem(JByteMod.res.getResource("rename_sourcefiles"));
-        sourceRename.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                if (jbm.getFile().getClasses() == null)
-                    return;
-                if (JOptionPane.showConfirmDialog(null, JByteMod.res.getResource("rename_sourcefiles_warnning"),
-                        JByteMod.res.getResource("confirm"), 0) == 0) {
-                    int i = 0;
-                    for (final ClassNode c : jbm.getFile().getClasses().values()) {
-                        c.sourceFile = "Class" + i++ + ".java";
-                    }
-                }
-            }
-        });
-        deobfTools.add(sourceRename);
-
         JMenuItem findSF = new JMenuItem(JByteMod.res.getResource("find_sourcefiles"));
         findSF.addActionListener(new ActionListener() {
 
@@ -323,6 +304,40 @@ public class MyMenuBar extends JMenuBar {
         });
         searchUtils.add(clazz_main);
 
+        JMenuItem optimize_peephole = new JMenuItem(JByteMod.res.getResource("optimize_peephole"));
+        optimize_peephole.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                if (jbm.getFile().getClasses() != null) {
+                    int count = DeobfusacteUtils.mergeTrapHandler(jbm.getFile().getClasses()) + DeobfusacteUtils.rearrangeGoto(jbm.getFile().getClasses()) + DeobfusacteUtils.foldConstant(jbm.getFile().getClasses());
+                    JOptionPane.showMessageDialog(null, "Optimized " + count + " places.",
+                            JByteMod.res.getResource("optimize_peephole"), JOptionPane.INFORMATION_MESSAGE);
+                }else {
+                    canNotFindFile();
+                }
+            }
+        });
+        deobfTools.add(optimize_peephole);
+
+        JMenuItem show_code = new JMenuItem(JByteMod.res.getResource("show_code"));
+        show_code.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                if (jbm.getFile().getClasses() != null) {
+                    DeobfusacteUtils.fixSignature(jbm.getFile().getClasses());
+                    DeobfusacteUtils.removeSyntheticBridge(jbm.getFile().getClasses());
+                    DeobfusacteUtils.removeLineNumber(jbm.getFile().getClasses());
+                    DeobfusacteUtils.removeLocalVariable(jbm.getFile().getClasses());
+                    DeobfusacteUtils.removeIllegalVarargs(jbm.getFile().getClasses());
+                    JOptionPane.showMessageDialog(null, "Finished showing codes.",
+                            JByteMod.res.getResource("show_code"), JOptionPane.INFORMATION_MESSAGE);
+                }else {
+                    canNotFindFile();
+                }
+            }
+        });
+        deobfTools.add(show_code);
+
         JMenuItem signatureFix = new JMenuItem(JByteMod.res.getResource("signaturefix"));
         signatureFix.addActionListener(new ActionListener() {
             @Override
@@ -398,6 +413,67 @@ public class MyMenuBar extends JMenuBar {
             }
         });
         deobfTools.add(illegal_varargs_remove);
+
+        JMenuItem fold_constant = new JMenuItem(JByteMod.res.getResource("fold_constant"));
+        fold_constant.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                if (jbm.getFile().getClasses() != null) {
+                    JOptionPane.showMessageDialog(null, "Folded " + DeobfusacteUtils.foldConstant(jbm.getFile().getClasses()) + " constants.",
+                            JByteMod.res.getResource("fold_constant"), JOptionPane.INFORMATION_MESSAGE);
+                }else {
+                    canNotFindFile();
+                }
+            }
+        });
+        deobfTools.add(fold_constant);
+
+        JMenuItem rearrange_goto = new JMenuItem(JByteMod.res.getResource("rearrange_goto"));
+        rearrange_goto.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                if (jbm.getFile().getClasses() != null) {
+                    JOptionPane.showMessageDialog(null, "Rearranged " + DeobfusacteUtils.rearrangeGoto(jbm.getFile().getClasses()) + " goto blocks.",
+                            JByteMod.res.getResource("rearrange_goto"), JOptionPane.INFORMATION_MESSAGE);
+                }else {
+                    canNotFindFile();
+                }
+            }
+        });
+        deobfTools.add(rearrange_goto);
+
+        JMenuItem merge_trap_handler = new JMenuItem(JByteMod.res.getResource("merge_trap_handler"));
+        merge_trap_handler.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                if (jbm.getFile().getClasses() != null) {
+                    JOptionPane.showMessageDialog(null, "Removed " + DeobfusacteUtils.mergeTrapHandler(jbm.getFile().getClasses()) + " duplicate handlers.",
+                            JByteMod.res.getResource("merge_trap_handler"), JOptionPane.INFORMATION_MESSAGE);
+                }else {
+                    canNotFindFile();
+                }
+            }
+        });
+        deobfTools.add(merge_trap_handler);
+
+        // From old version of JbyteMod by Grax
+        JMenuItem sourceRename = new JMenuItem(JByteMod.res.getResource("rename_sourcefiles"));
+        sourceRename.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                if (jbm.getFile().getClasses() == null)
+                    return;
+                if (JOptionPane.showConfirmDialog(null, JByteMod.res.getResource("rename_sourcefiles_warnning"),
+                        JByteMod.res.getResource("confirm"), 0) == 0) {
+                    int i = 0;
+                    for (final ClassNode c : jbm.getFile().getClasses().values()) {
+                        c.sourceFile = "Class" + i++ + ".java";
+                    }
+                }
+            }
+        });
+        deobfTools.add(sourceRename);
 
         this.add(getSettings());
         JMenu help = new JMenu(JByteMod.res.getResource("help"));

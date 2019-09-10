@@ -113,6 +113,11 @@
    <string name="line_number_remove">Line Number Remover</string>
    <string name="local_variable_remove">Local Variable Remover</string>
    <string name="illegal_varargs_remove">Illegal Varargs Remover</string>
+   <string name="fold_constant">Fold Constant</string>
+   <string name="rearrange_goto">Rearrange Goto</string>
+   <string name="merge_trap_handler">Merge Trap Handler</string>
+   <string name="optimize_peephole">Optimize Peephole*</string>
+   <string name="show_code">Show Code*</string>
    <string name="attach_error">Is attach.dll located in the right place? Try using '-Djava.library.path'!</string>
    <string name="deobf_tools">Deobfuscation Tools</string>
 
