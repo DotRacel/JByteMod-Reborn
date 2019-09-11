@@ -309,7 +309,7 @@ public class MyMenuBar extends JMenuBar {
             @Override
             public void actionPerformed(final ActionEvent e) {
                 if (jbm.getFile().getClasses() != null) {
-                    int count = DeobfusacteUtils.mergeTrapHandler(jbm.getFile().getClasses()) + DeobfusacteUtils.rearrangeGoto(jbm.getFile().getClasses()) + DeobfusacteUtils.foldConstant(jbm.getFile().getClasses());
+                    int count = DeobfusacteUtils.mergeTrapHandler(jbm.getFile().getClasses()) + DeobfusacteUtils.rearrangeGoto(jbm.getFile().getClasses()) + DeobfusacteUtils.foldConstant(jbm.getFile().getClasses()) + DeobfusacteUtils.removeUnconditionalSwitch(jbm.getFile().getClasses());
                     JOptionPane.showMessageDialog(null, "Optimized " + count + " places.",
                             JByteMod.res.getResource("optimize_peephole"), JOptionPane.INFORMATION_MESSAGE);
                 }else {
@@ -455,6 +455,20 @@ public class MyMenuBar extends JMenuBar {
             }
         });
         deobfTools.add(merge_trap_handler);
+
+        JMenuItem remove_unconditional_switch = new JMenuItem(JByteMod.res.getResource("remove_unconditional_switch"));
+        remove_unconditional_switch.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                if (jbm.getFile().getClasses() != null) {
+                    JOptionPane.showMessageDialog(null, "Removed " + DeobfusacteUtils.removeUnconditionalSwitch(jbm.getFile().getClasses()) + " unconditional switch(es).",
+                            JByteMod.res.getResource("remove_unconditional_switch"), JOptionPane.INFORMATION_MESSAGE);
+                }else {
+                    canNotFindFile();
+                }
+            }
+        });
+        deobfTools.add(remove_unconditional_switch);
 
         // From old version of JbyteMod by Grax
         JMenuItem sourceRename = new JMenuItem(JByteMod.res.getResource("rename_sourcefiles"));

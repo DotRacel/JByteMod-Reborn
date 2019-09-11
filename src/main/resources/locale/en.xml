@@ -118,6 +118,7 @@
    <string name="merge_trap_handler">Merge Trap Handler</string>
    <string name="optimize_peephole">Optimize Peephole*</string>
    <string name="show_code">Show Code*</string>
+   <string name="remove_unconditional_switch">Remove Unconditional Switch</string>
    <string name="attach_error">Is attach.dll located in the right place? Try using '-Djava.library.path'!</string>
    <string name="deobf_tools">Deobfuscation Tools</string>
 

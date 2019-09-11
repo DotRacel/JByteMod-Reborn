@@ -623,6 +623,114 @@ public class DeobfusacteUtils {
         return redudantTraps.get();
     }
 
+    public static int removeUnconditionalSwitch(Map<String, ClassNode> classes) {
+        AtomicInteger counter = new AtomicInteger();
+
+        classes.values().forEach(classNode -> {
+            MethodNode clinit = classNode.methods.stream().filter(mn -> mn.name.equals("<clinit>")).findFirst().orElse(null);
+            if (clinit != null) {
+                Map<LabelNode, LabelNode> mapping = new HashMap<>();
+                InsnList insns = clinit.instructions;
+                for (int i = 0; i < insns.size(); i++) {
+                    AbstractInsnNode node = insns.get(i);
+                    if (node instanceof LabelNode) {
+                        mapping.put((LabelNode) node, (LabelNode) node);
+                    }
+                }
+                for (int i = 0; i < insns.size(); i++) {
+                    AbstractInsnNode node = insns.get(i);
+                    int prev = Utils.iconstToInt(node.getOpcode());
+                    if (prev == Integer.MIN_VALUE) {
+                        if (node.getOpcode() == Opcodes.BIPUSH || node.getOpcode() == Opcodes.SIPUSH) {
+                            prev = ((IntInsnNode) node).operand;
+                        }
+                    }
+                    if (prev == Integer.MIN_VALUE) {
+                        if (node instanceof LdcInsnNode && ((LdcInsnNode) node).cst instanceof Integer) {
+                            prev = (Integer) ((LdcInsnNode) node).cst;
+                        }
+                    }
+                    if (prev != Integer.MIN_VALUE) {
+                        AbstractInsnNode next = Utils.getNextFollowGoto(node);
+                        if (next instanceof TableSwitchInsnNode) {
+                            TableSwitchInsnNode cast = (TableSwitchInsnNode) next;
+                            int index = prev - cast.min;
+                            LabelNode go = null;
+                            if (index >= 0 && index < cast.labels.size()) {
+                                go = cast.labels.get(index);
+                            } else {
+                                go = cast.dflt;
+                            }
+                            InsnList replace = new InsnList();
+                            replace.add(new JumpInsnNode(Opcodes.GOTO, go));
+                            insns.insertBefore(node, replace);
+                            insns.remove(node);
+                            counter.incrementAndGet();
+                        }
+                    }
+                }
+            }
+        });
+
+        classes.values().forEach(classNode -> {
+            MethodNode clinit = classNode.methods.stream().filter(mn -> mn.name.equals("<clinit>")).findFirst().orElse(null);
+            if (clinit != null) {
+                Map<LabelNode, LabelNode> mapping = new HashMap<>();
+                InsnList insns = clinit.instructions;
+                for (int i = 0; i < insns.size(); i++) {
+                    AbstractInsnNode node = insns.get(i);
+                    if (node instanceof LabelNode) {
+                        mapping.put((LabelNode) node, (LabelNode) node);
+                    }
+                }
+                for (int i = 0; i < insns.size(); i++) {
+                    AbstractInsnNode node = insns.get(i);
+                    int prev = Utils.iconstToInt(node.getOpcode());
+                    if (prev == Integer.MIN_VALUE) {
+                        if (node.getOpcode() == Opcodes.BIPUSH || node.getOpcode() == Opcodes.SIPUSH) {
+                            prev = ((IntInsnNode) node).operand;
+                        }
+                    }
+                    if (prev == Integer.MIN_VALUE) {
+                        if (node instanceof LdcInsnNode && ((LdcInsnNode) node).cst instanceof Integer) {
+                            prev = (Integer) ((LdcInsnNode) node).cst;
+                        }
+                    }
+                    if (prev != Integer.MIN_VALUE) {
+                        AbstractInsnNode next = Utils.getNextFollowGoto(node);
+                        if (next.getOpcode() == Opcodes.SWAP) {
+                            next = Utils.getNextFollowGoto(next);
+                            if (next.getOpcode() == Opcodes.INVOKESTATIC) {
+                                AbstractInsnNode methodNode = next;
+                                next = Utils.getNextFollowGoto(next);
+                                if (next.getOpcode() == Opcodes.SWAP) {
+                                    next = Utils.getNextFollowGoto(next);
+                                    if (next instanceof TableSwitchInsnNode) {
+                                        TableSwitchInsnNode cast = (TableSwitchInsnNode) next;
+                                        int index = prev - cast.min;
+                                        LabelNode go = null;
+                                        if (index >= 0 && index < cast.labels.size()) {
+                                            go = cast.labels.get(index);
+                                        } else {
+                                            go = cast.dflt;
+                                        }
+                                        InsnList replace = new InsnList();
+                                        replace.add(methodNode.clone(null));
+                                        replace.add(new JumpInsnNode(Opcodes.GOTO, go));
+                                        insns.insertBefore(node, replace);
+                                        insns.remove(node);
+                                        counter.incrementAndGet();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        return counter.get();
+    }
+
     private static boolean hasAnnotations(ClassNode classNode) {
         return (classNode.visibleAnnotations != null && !classNode.visibleAnnotations.isEmpty())
                 || (classNode.invisibleAnnotations != null && !classNode.invisibleAnnotations.isEmpty());
