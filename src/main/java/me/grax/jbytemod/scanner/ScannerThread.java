@@ -29,7 +29,7 @@ public class ScannerThread extends Thread {
 
         result.printResults();
 
-        JOptionPane.showMessageDialog(null, String.join("\n", result.getResults()),
+        JOptionPane.showMessageDialog(null, String.join("\n", result.getResults()) + "\n\nPowered by Raccoon Scanner.",
                 JByteMod.res.getResource("raccoon"), JOptionPane.INFORMATION_MESSAGE);
     }
 

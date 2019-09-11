@@ -177,9 +177,8 @@ public class LoadTask extends SwingWorker<Void, Integer> {
         JByteMod.LOGGER.log("Tree refreshed.");
         JByteMod.LOGGER.log("Loaded classes in " + (System.currentTimeMillis() - startTime) + "ms");
 
-        if(ja.getClasses() == null) {
-            System.out.println("aaa");
-        }
+        if(!JByteMod.ops.get("auto_scan").getBoolean()) return;
+
         scannerThread = new ScannerThread(ja.getClasses());
         scannerThread.setJarManifest(ja.getJarManifest());
         scannerThread.start();

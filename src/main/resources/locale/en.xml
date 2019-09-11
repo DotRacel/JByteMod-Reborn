@@ -120,6 +120,8 @@
    <string name="show_code">Show Code*</string>
    <string name="remove_unconditional_switch">Remove Unconditional Switch</string>
    <string name="raccoon">Raccoon Scanner</string>
+   <string name="raccoon_scan">Scan</string>
+   <string name="auto_scan">Auto Scan File</string>
    <string name="attach_error">Is attach.dll located in the right place? Try using '-Djava.library.path'!</string>
    <string name="deobf_tools">Deobfuscation Tools</string>
 

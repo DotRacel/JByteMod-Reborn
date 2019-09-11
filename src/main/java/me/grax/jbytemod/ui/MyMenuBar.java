@@ -4,10 +4,12 @@ import android.util.Patterns;
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import me.grax.jbytemod.JByteMod;
+import me.grax.jbytemod.JarArchive;
 import me.grax.jbytemod.plugin.Plugin;
 import me.grax.jbytemod.res.LanguageRes;
 import me.grax.jbytemod.res.Option;
 import me.grax.jbytemod.res.Options;
+import me.grax.jbytemod.scanner.ScannerThread;
 import me.grax.jbytemod.ui.dialogue.ClassDialogue;
 import me.grax.jbytemod.ui.lists.entries.SearchEntry;
 import me.grax.jbytemod.utils.DeobfusacteUtils;
@@ -223,6 +225,27 @@ public class MyMenuBar extends JMenuBar {
         JMenu deobfTools = new JMenu(JByteMod.res.getResource("deobf_tools"));
         utils.add(deobfTools);
 
+        JMenu raccoon = new JMenu(JByteMod.res.getResource("raccoon"));
+        utils.add(raccoon);
+
+        JMenuItem raccoon_scan = new JMenuItem(JByteMod.res.getResource("raccoon_scan"));
+        raccoon_scan.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                if (jbm.getFile() != null && jbm.getFile().getClasses() != null) {
+                    JarArchive ja = JByteMod.instance.getFile();
+                    ScannerThread scannerThread;
+
+                    scannerThread = new ScannerThread(ja.getClasses());
+                    scannerThread.setJarManifest(ja.getJarManifest());
+                    scannerThread.start();
+                }else {
+                    canNotFindFile();
+                }
+            }
+        });
+        raccoon.add(raccoon_scan);
+
         JMenuItem findSF = new JMenuItem(JByteMod.res.getResource("find_sourcefiles"));
         findSF.addActionListener(new ActionListener() {
 
@@ -308,7 +331,7 @@ public class MyMenuBar extends JMenuBar {
         optimize_peephole.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                if (jbm.getFile().getClasses() != null) {
+                if (jbm.getFile() != null && jbm.getFile().getClasses() != null) {
                     int count = DeobfusacteUtils.mergeTrapHandler(jbm.getFile().getClasses()) + DeobfusacteUtils.rearrangeGoto(jbm.getFile().getClasses()) + DeobfusacteUtils.foldConstant(jbm.getFile().getClasses()) + DeobfusacteUtils.removeUnconditionalSwitch(jbm.getFile().getClasses());
                     JOptionPane.showMessageDialog(null, "Optimized " + count + " places.",
                             JByteMod.res.getResource("optimize_peephole"), JOptionPane.INFORMATION_MESSAGE);
@@ -323,7 +346,7 @@ public class MyMenuBar extends JMenuBar {
         show_code.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                if (jbm.getFile().getClasses() != null) {
+                if (jbm.getFile() != null && jbm.getFile().getClasses() != null) {
                     DeobfusacteUtils.fixSignature(jbm.getFile().getClasses());
                     DeobfusacteUtils.removeSyntheticBridge(jbm.getFile().getClasses());
                     DeobfusacteUtils.removeLineNumber(jbm.getFile().getClasses());
@@ -342,7 +365,7 @@ public class MyMenuBar extends JMenuBar {
         signatureFix.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                if (jbm.getFile().getClasses() != null) {
+                if (jbm.getFile() != null && jbm.getFile().getClasses() != null) {
                     DeobfusacteUtils.fixSignature(jbm.getFile().getClasses());
                     JOptionPane.showMessageDialog(null, JByteMod.res.getResource("finish_tip"),
                             JByteMod.res.getResource("signaturefix"), JOptionPane.INFORMATION_MESSAGE);
@@ -357,7 +380,7 @@ public class MyMenuBar extends JMenuBar {
         access_fix.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                if (jbm.getFile().getClasses() != null) {
+                if (jbm.getFile() != null && jbm.getFile().getClasses() != null) {
                     DeobfusacteUtils.removeSyntheticBridge(jbm.getFile().getClasses());
                     JOptionPane.showMessageDialog(null, JByteMod.res.getResource("finish_tip"),
                             "Synthetic Bridge Fixer", JOptionPane.INFORMATION_MESSAGE);
@@ -373,7 +396,7 @@ public class MyMenuBar extends JMenuBar {
         linenumber_remove.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                if (jbm.getFile().getClasses() != null) {
+                if (jbm.getFile() != null && jbm.getFile().getClasses() != null) {
                     DeobfusacteUtils.removeLineNumber(jbm.getFile().getClasses());
                     JOptionPane.showMessageDialog(null, JByteMod.res.getResource("finish_tip"),
                             JByteMod.res.getResource("line_number_remove"), JOptionPane.INFORMATION_MESSAGE);
@@ -388,7 +411,7 @@ public class MyMenuBar extends JMenuBar {
         local_variable_remove.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                if (jbm.getFile().getClasses() != null) {
+                if (jbm.getFile() != null && jbm.getFile().getClasses() != null) {
                     DeobfusacteUtils.removeLocalVariable(jbm.getFile().getClasses());
                     JOptionPane.showMessageDialog(null, JByteMod.res.getResource("finish_tip"),
                             JByteMod.res.getResource("local_variable_remove"), JOptionPane.INFORMATION_MESSAGE);
@@ -403,7 +426,7 @@ public class MyMenuBar extends JMenuBar {
         illegal_varargs_remove.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                if (jbm.getFile().getClasses() != null) {
+                if (jbm.getFile() != null && jbm.getFile().getClasses() != null) {
                     DeobfusacteUtils.removeIllegalVarargs(jbm.getFile().getClasses());
                     JOptionPane.showMessageDialog(null, JByteMod.res.getResource("finish_tip"),
                             JByteMod.res.getResource("illegal_varargs_remove"), JOptionPane.INFORMATION_MESSAGE);
@@ -418,7 +441,7 @@ public class MyMenuBar extends JMenuBar {
         fold_constant.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                if (jbm.getFile().getClasses() != null) {
+                if (jbm.getFile() != null && jbm.getFile().getClasses() != null) {
                     JOptionPane.showMessageDialog(null, "Folded " + DeobfusacteUtils.foldConstant(jbm.getFile().getClasses()) + " constants.",
                             JByteMod.res.getResource("fold_constant"), JOptionPane.INFORMATION_MESSAGE);
                 }else {
@@ -432,7 +455,7 @@ public class MyMenuBar extends JMenuBar {
         rearrange_goto.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                if (jbm.getFile().getClasses() != null) {
+                if (jbm.getFile() != null && jbm.getFile().getClasses() != null) {
                     JOptionPane.showMessageDialog(null, "Rearranged " + DeobfusacteUtils.rearrangeGoto(jbm.getFile().getClasses()) + " goto blocks.",
                             JByteMod.res.getResource("rearrange_goto"), JOptionPane.INFORMATION_MESSAGE);
                 }else {
@@ -446,7 +469,7 @@ public class MyMenuBar extends JMenuBar {
         merge_trap_handler.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                if (jbm.getFile().getClasses() != null) {
+                if (jbm.getFile() != null && jbm.getFile().getClasses() != null) {
                     JOptionPane.showMessageDialog(null, "Removed " + DeobfusacteUtils.mergeTrapHandler(jbm.getFile().getClasses()) + " duplicate handlers.",
                             JByteMod.res.getResource("merge_trap_handler"), JOptionPane.INFORMATION_MESSAGE);
                 }else {
@@ -460,7 +483,7 @@ public class MyMenuBar extends JMenuBar {
         remove_unconditional_switch.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                if (jbm.getFile().getClasses() != null) {
+                if (jbm.getFile() != null && jbm.getFile().getClasses() != null) {
                     JOptionPane.showMessageDialog(null, "Removed " + DeobfusacteUtils.removeUnconditionalSwitch(jbm.getFile().getClasses()) + " unconditional switch(es).",
                             JByteMod.res.getResource("remove_unconditional_switch"), JOptionPane.INFORMATION_MESSAGE);
                 }else {
