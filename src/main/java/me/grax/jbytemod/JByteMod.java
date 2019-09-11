@@ -7,6 +7,7 @@ import me.grax.jbytemod.plugin.Plugin;
 import me.grax.jbytemod.plugin.PluginManager;
 import me.grax.jbytemod.res.LanguageRes;
 import me.grax.jbytemod.res.Options;
+import me.grax.jbytemod.scanner.ScannerThread;
 import me.grax.jbytemod.ui.*;
 import me.grax.jbytemod.ui.graph.ControlFlowPanel;
 import me.grax.jbytemod.ui.lists.LVPList;

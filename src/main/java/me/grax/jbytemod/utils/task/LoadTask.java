@@ -3,6 +3,7 @@ package me.grax.jbytemod.utils.task;
 import me.grax.jbytemod.JByteMod;
 import me.grax.jbytemod.JarArchive;
 import me.grax.jbytemod.discord.Discord;
+import me.grax.jbytemod.scanner.ScannerThread;
 import me.grax.jbytemod.ui.PageEndPanel;
 import me.grax.jbytemod.utils.ErrorDisplay;
 import org.apache.commons.io.IOUtils;
@@ -32,6 +33,7 @@ public class LoadTask extends SwingWorker<Void, Integer> {
     private long maxMem;
     private boolean memoryWarning;
     private long startTime;
+    private ScannerThread scannerThread;
 
     public LoadTask(JByteMod jbm, File input, JarArchive ja) {
         try {
@@ -132,9 +134,12 @@ public class LoadTask extends SwingWorker<Void, Integer> {
                     }
 
                 }
-            } else {
-                //JByteMod.LOGGER.log("Other file: " + name + "-" + bytes.length);
-
+            }else if(name.equals("META-INF/MANIFEST.MF")) {
+                ja.setJarManifest(bytes);
+                synchronized (otherFiles) {
+                    otherFiles.put(name, bytes);
+                }
+            }else {
                 synchronized (otherFiles) {
                     otherFiles.put(name, bytes);
                 }
@@ -153,7 +158,6 @@ public class LoadTask extends SwingWorker<Void, Integer> {
             e.printStackTrace();
             JByteMod.LOGGER.err("Failed loading file");
         }
-        return;
     }
 
     @Override
@@ -172,5 +176,12 @@ public class LoadTask extends SwingWorker<Void, Integer> {
         jbm.refreshTree();
         JByteMod.LOGGER.log("Tree refreshed.");
         JByteMod.LOGGER.log("Loaded classes in " + (System.currentTimeMillis() - startTime) + "ms");
+
+        if(ja.getClasses() == null) {
+            System.out.println("aaa");
+        }
+        scannerThread = new ScannerThread(ja.getClasses());
+        scannerThread.setJarManifest(ja.getJarManifest());
+        scannerThread.start();
     }
 }

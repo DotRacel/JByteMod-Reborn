@@ -11,6 +11,7 @@ import java.util.Map;
 public class JarArchive {
     protected Map<String, ClassNode> classes;
     protected Map<String, byte[]> output;
+    protected byte[] jarManifest;
     private boolean singleEntry;
 
     public JarArchive(ClassNode cn) {
@@ -36,6 +37,14 @@ public class JarArchive {
 
     public Map<String, ClassNode> getClasses() {
         return classes;
+    }
+
+    public byte[] getJarManifest() {
+        return jarManifest;
+    }
+
+    public void setJarManifest(byte[] jarManifest){
+        this.jarManifest = jarManifest;
     }
 
     public void setClasses(Map<String, ClassNode> classes) {
