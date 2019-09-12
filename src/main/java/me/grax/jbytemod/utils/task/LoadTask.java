@@ -119,7 +119,13 @@ public class LoadTask extends SwingWorker<Void, Integer> {
                         if (cafebabe.toLowerCase().equals("cafebabe")) {
                             try {
                                 final ClassNode cn = convertToASM(bytes);
-                                if (cn != null && FileUtils.isBadClass(cn) <= 80) { // && (cn.name.equals("java/lang/Object") ? true : cn.superName != null)
+                                int rate;
+                                if(!JByteMod.ops.get("bad_class_check").getBoolean()){
+                                    rate = 0;
+                                }else {
+                                    rate = FileUtils.isBadClass(cn);
+                                }
+                                if (cn != null && rate <= 80) { // && (cn.name.equals("java/lang/Object") ? true : cn.superName != null)
                                     classes.put(cn.name, cn);
                                 }else {
                                     synchronized (otherFiles) {
