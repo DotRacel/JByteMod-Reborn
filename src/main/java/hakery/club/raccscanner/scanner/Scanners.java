@@ -3,6 +3,7 @@ package hakery.club.raccscanner.scanner;
 import hakery.club.raccscanner.Raccoon;
 import hakery.club.raccscanner.scanner.impl.classes.ClassCountScanner;
 import hakery.club.raccscanner.scanner.impl.classes.DebugInfoScanner;
+import hakery.club.raccscanner.scanner.impl.debugging.DebugScanner;
 import hakery.club.raccscanner.scanner.impl.jar.JarSizeScanner;
 import hakery.club.raccscanner.scanner.impl.obfuscators.allatori.AllatoriStringEncryptionScanner;
 import hakery.club.raccscanner.scanner.impl.obfuscators.dasho.DashOStringEncryptionScanner;
