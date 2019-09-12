@@ -6,6 +6,7 @@ import me.grax.jbytemod.discord.Discord;
 import me.grax.jbytemod.scanner.ScannerThread;
 import me.grax.jbytemod.ui.PageEndPanel;
 import me.grax.jbytemod.utils.ErrorDisplay;
+import me.grax.jbytemod.utils.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.tools.zip.ZipEntry;
 import org.apache.tools.zip.ZipFile;
@@ -118,8 +119,12 @@ public class LoadTask extends SwingWorker<Void, Integer> {
                         if (cafebabe.toLowerCase().equals("cafebabe")) {
                             try {
                                 final ClassNode cn = convertToASM(bytes);
-                                if (cn != null) { // && (cn.name.equals("java/lang/Object") ? true : cn.superName != null)
+                                if (cn != null && FileUtils.isBadClass(cn) <= 80) { // && (cn.name.equals("java/lang/Object") ? true : cn.superName != null)
                                     classes.put(cn.name, cn);
+                                }else {
+                                    synchronized (otherFiles) {
+                                        otherFiles.put(name, bytes);
+                                    }
                                 }
                             } catch (IllegalArgumentException e) {
                                 synchronized (otherFiles) {
