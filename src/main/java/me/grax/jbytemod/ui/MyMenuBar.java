@@ -437,6 +437,21 @@ public class MyMenuBar extends JMenuBar {
         });
         deobfTools.add(illegal_varargs_remove);
 
+        JMenuItem illegal_invisible_annotations = new JMenuItem(JByteMod.res.getResource("illegal_invisible_annotations"));
+        illegal_invisible_annotations.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                if (jbm.getFile() != null && jbm.getFile().getClasses() != null) {
+                    DeobfusacteUtils.removeIllegalInvisibleAnnotations(jbm.getFile().getClasses());
+                    JOptionPane.showMessageDialog(null, JByteMod.res.getResource("finish_tip"),
+                            JByteMod.res.getResource("illegal_invisible_annotations"), JOptionPane.INFORMATION_MESSAGE);
+                }else {
+                    canNotFindFile();
+                }
+            }
+        });
+        deobfTools.add(illegal_invisible_annotations);
+
         JMenuItem fold_constant = new JMenuItem(JByteMod.res.getResource("fold_constant"));
         fold_constant.addActionListener(new ActionListener() {
             @Override

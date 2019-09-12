@@ -731,6 +731,51 @@ public class DeobfusacteUtils {
         return counter.get();
     }
 
+    public static void removeIllegalInvisibleAnnotations(Map<String, ClassNode> classes){
+        classes.values().forEach(DeobfusacteUtils::removeIllegalInvisibleAnnotations);
+    }
+
+    public static void removeIllegalInvisibleAnnotations(ClassNode classNode){
+        if(!hasInvisibleAnnotations(classNode)) return;
+
+        // Check the class first.
+        for (AnnotationNode invisibleAnnotation : classNode.invisibleAnnotations) {
+            if (invisibleAnnotation.desc.contains("\n")) classNode.invisibleAnnotations = null;
+        }
+
+        // Now we need to check the methods.
+        classNode.methods.forEach(methodNode -> {
+            if(hasInvisibleAnnotations(methodNode)){
+                methodNode.invisibleAnnotations.forEach(annotationNode -> {
+                    if(annotationNode.desc.contains("\n")) methodNode.invisibleAnnotations = null;
+                });
+            }
+        });
+
+        // Finally, we need to check the fields.
+        classNode.fields.forEach(fieldNode -> {
+            if(hasInvisibleAnnotations(fieldNode)){
+                fieldNode.invisibleAnnotations.forEach(annotationNode -> {
+                    if(annotationNode.desc.contains("\n")) fieldNode.invisibleAnnotations = null;
+                });
+            }
+        });
+    }
+
+    private static boolean hasInvisibleAnnotations(ClassNode classNode) {
+        return classNode.invisibleAnnotations != null && !classNode.invisibleAnnotations.isEmpty();
+    }
+
+    private static boolean hasInvisibleAnnotations(MethodNode methodNode) {
+        return methodNode.invisibleAnnotations != null && !methodNode.invisibleAnnotations.isEmpty();
+    }
+
+    private static boolean hasInvisibleAnnotations(FieldNode fieldNode) {
+        return fieldNode.invisibleAnnotations != null && !fieldNode.invisibleAnnotations.isEmpty();
+    }
+
+
+
     private static boolean hasAnnotations(ClassNode classNode) {
         return (classNode.visibleAnnotations != null && !classNode.visibleAnnotations.isEmpty())
                 || (classNode.invisibleAnnotations != null && !classNode.invisibleAnnotations.isEmpty());

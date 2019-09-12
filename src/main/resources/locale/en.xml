@@ -123,6 +123,7 @@
    <string name="raccoon_scan">Scan</string>
    <string name="auto_scan">Auto Scan File</string>
    <string name="bad_class_check">Bad Class Check</string>
+   <string name="illegal_invisible_annotations">Illegal Invisible Annotations Remover</string>
    <string name="attach_error">Is attach.dll located in the right place? Try using '-Djava.library.path'!</string>
    <string name="deobf_tools">Deobfuscation Tools</string>
 
