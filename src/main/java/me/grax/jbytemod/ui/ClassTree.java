@@ -80,10 +80,14 @@ public class ClassTree extends JTree implements IDropUser {
                     if (preloadMap.containsKey(p)) {
                         prev = preloadMap.get(p);
                     } else {
-                        SortedTreeNode stn = new SortedTreeNode(path[i]);
-                        prev.add(stn);
-                        prev = stn;
-                        preloadMap.put(p, prev);
+                        try{
+                            SortedTreeNode stn = new SortedTreeNode(path[i]);
+                            prev.add(stn);
+                            prev = stn;
+                            preloadMap.put(p, prev);
+                        }catch(ArrayIndexOutOfBoundsException ex){
+                            JByteMod.LOGGER.println("Failed to load " + path[i]);
+                        }
                     }
                     i++;
                 }
