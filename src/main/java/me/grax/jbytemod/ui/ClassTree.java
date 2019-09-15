@@ -24,6 +24,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 
 public class ClassTree extends JTree implements IDropUser {
 
@@ -67,7 +68,9 @@ public class ClassTree extends JTree implements IDropUser {
         if (jar.getClasses() != null)
             for (ClassNode c : jar.getClasses().values()) {
                 String name = c.name;
-                String[] path = name.split("/");
+                String[] path = array_unique(name.split("/"));
+                name = String.join("/", path);
+
                 int i = 0;
                 int slashIndex = 0;
                 SortedTreeNode prev = root;
@@ -104,6 +107,17 @@ public class ClassTree extends JTree implements IDropUser {
         if (!expandedNodes.isEmpty()) {
             expandSaved(root);
         }
+    }
+
+
+    public static String[] array_unique(String[] ss) {
+        // array_unique
+        List<String> list =new ArrayList<String>();
+        for(String s:ss){
+            if(!list.contains(s))			//或者list.indexOf(s)!=-1
+                list.add(s);
+        }
+        return list.toArray(new String[list.size()]);
     }
 
     public void expandSaved(SortedTreeNode node) {
