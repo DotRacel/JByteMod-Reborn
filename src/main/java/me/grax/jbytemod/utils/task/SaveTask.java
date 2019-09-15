@@ -51,11 +51,15 @@ public class SaveTask extends SwingWorker<Void, Integer> {
                 double size = classes.keySet().size();
                 double i = 0;
                 for (String s : classes.keySet()) {
-                    ClassNode node = classes.get(s);
-                    ClassWriter writer = new ClassWriter(flags);
-                    node.accept(writer);
-                    outputBytes.put(s + ".class", writer.toByteArray());
-                    publish((int) ((i++ / size) * 50d));
+                    try{
+                        ClassNode node = classes.get(s);
+                        ClassWriter writer = new ClassWriter(flags);
+                        node.accept(writer);
+                        outputBytes.put(s + ".class", writer.toByteArray());
+                        publish((int) ((i++ / size) * 50d));
+                    }catch(StringIndexOutOfBoundsException exception) {
+                        JByteMod.LOGGER.println("Failed to save " + classes.get(s).name);
+                    }
                 }
                 publish(50);
                 JByteMod.LOGGER.log("Saving..");
