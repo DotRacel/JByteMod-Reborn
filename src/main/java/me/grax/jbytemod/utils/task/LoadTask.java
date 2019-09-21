@@ -35,9 +35,12 @@ public class LoadTask extends SwingWorker<Void, Integer> {
     private boolean memoryWarning;
     private long startTime;
     private ScannerThread scannerThread;
+    private int othersFile;
+    private int junkClasses;
 
     public LoadTask(JByteMod jbm, File input, JarArchive ja) {
         try {
+            this.othersFile = 0;
             this.startTime = System.currentTimeMillis();
             this.jarSize = countFiles(this.input = new ZipFile(input, "UTF-8"));
             JByteMod.LOGGER.log(jarSize + " files to load!");
@@ -101,6 +104,12 @@ public class LoadTask extends SwingWorker<Void, Integer> {
         jar.close();
         ja.setClasses(classes);
         ja.setOutput(otherFiles);
+
+        this.othersFile = otherFiles.size();
+        for(String name : otherFiles.keySet()){
+            if(name.endsWith(".class") || name.endsWith(".class/")) junkClasses++;
+        }
+
         return;
     }
 
@@ -132,13 +141,13 @@ public class LoadTask extends SwingWorker<Void, Integer> {
                                         otherFiles.put(name, bytes);
                                     }
                                 }
-                            } catch (IllegalArgumentException e) {
+                            } catch (Exception e) {
                                 synchronized (otherFiles) {
                                     otherFiles.put(name, bytes);
                                 }
                             }
                         }
-                    } catch (ArrayIndexOutOfBoundsException ex) {
+                    } catch (Exception ex) {
                         synchronized (otherFiles) {
                             otherFiles.put(name, bytes);
                         }
@@ -186,7 +195,7 @@ public class LoadTask extends SwingWorker<Void, Integer> {
         JByteMod.LOGGER.log("Successfully loaded file!");
         jbm.refreshTree();
         JByteMod.LOGGER.log("Tree refreshed.");
-        JByteMod.LOGGER.log("Loaded classes in " + (System.currentTimeMillis() - startTime) + "ms");
+        JByteMod.LOGGER.log("Loaded classes in " + (System.currentTimeMillis() - startTime) + "ms" + ", bypassed " + othersFile + " files because I can't load them. (Include " + junkClasses + " junk classes.)");
 
         if(!JByteMod.ops.get("auto_scan").getBoolean()) return;
 
