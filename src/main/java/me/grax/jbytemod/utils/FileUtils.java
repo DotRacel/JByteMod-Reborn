@@ -28,6 +28,9 @@ public class FileUtils {
         if(classNode.version > 55) toReturn += 10;
         if(classNode.access == 0 && classNode.methods.size() == 0) toReturn += 50;
         if(classNode.access == 0) toReturn += 20;
+        if(classNode.name == null) toReturn = 100;
+        if(classNode.version == 49) toReturn += 20;
+        if(classNode.version == 49 && classNode.superName.equals("java/lang/Object") && classNode.methods.size() == 2 && classNode.access == 33) toReturn = 100; // Special
 
         if(toReturn > 100) toReturn = 100;
         return toReturn;
