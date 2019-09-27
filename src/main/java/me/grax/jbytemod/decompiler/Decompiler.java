@@ -55,7 +55,12 @@ public abstract class Decompiler extends Thread {
         // do not regenerate anything here
         ClassWriter cw = new ClassWriter(0);
         cn.accept(cw);
-        return decompile(cw.toByteArray(), mn);
+        try{
+            return decompile(cw.toByteArray(), mn);
+        }catch(Exception exception){
+            return "Failed to decompile, reason: " + exception.getMessage();
+        }
+
     }
 
     public abstract String decompile(byte[] b, MethodNode mn);
