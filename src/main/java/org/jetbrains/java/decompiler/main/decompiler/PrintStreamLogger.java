@@ -19,14 +19,14 @@ public class PrintStreamLogger extends IFernflowerLogger {
   @Override
   public void writeMessage(String message, Severity severity) {
     if (accepts(severity)) {
-      stream.println(severity.prefix + TextUtil.getIndentString(indent) + message);
+      //stream.println(severity.prefix + TextUtil.getIndentString(indent) + message);
     }
   }
 
   @Override
   public void writeMessage(String message, Severity severity, Throwable t) {
     if (accepts(severity)) {
-      writeMessage(message, severity);
+      //writeMessage(message, severity);
       t.printStackTrace(stream);
     }
   }

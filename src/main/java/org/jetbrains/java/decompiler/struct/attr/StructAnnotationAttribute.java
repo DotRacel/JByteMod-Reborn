@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.attr;
 
+import me.grax.jbytemod.JByteMod;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
@@ -28,7 +29,11 @@ public class StructAnnotationAttribute extends StructGeneralAttribute {
     if (len > 0) {
       List<AnnotationExprent> annotations = new ArrayList<>(len);
       for (int i = 0; i < len; i++) {
-        annotations.add(parseAnnotation(data, pool));
+        try{
+          annotations.add(parseAnnotation(data, pool));
+        }catch(Exception e){
+          JByteMod.LOGGER.println("Failed to parse an annotation, bypassed.");
+        }
       }
       return annotations;
     }
