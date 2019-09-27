@@ -1,40 +1,23 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 import org.jetbrains.java.decompiler.code.SwitchInstruction;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.SwitchHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.FieldExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.SwitchExprent;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.TextBuffer;
+
+import java.util.*;
 
 public class SwitchStatement extends Statement {
 
@@ -46,11 +29,11 @@ public class SwitchStatement extends Statement {
 
   private List<List<StatEdge>> caseEdges = new ArrayList<>();
 
-  private List<List<ConstExprent>> caseValues = new ArrayList<>();
+  private List<List<Exprent>> caseValues = new ArrayList<>();
 
   private StatEdge default_edge;
 
-  private final List<Exprent> headexprent = new ArrayList<>();
+  private final List<Exprent> headexprent = new ArrayList<>(1);
 
   // *****************************************************************************
   // constructors
@@ -112,7 +95,10 @@ public class SwitchStatement extends Statement {
     return null;
   }
 
+  @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+    SwitchHelper.simplify(this);
+
     TextBuffer buf = new TextBuffer();
     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
     buf.append(first.toJava(indent, tracer));
@@ -131,19 +117,29 @@ public class SwitchStatement extends Statement {
 
       Statement stat = caseStatements.get(i);
       List<StatEdge> edges = caseEdges.get(i);
-      List<ConstExprent> values = caseValues.get(i);
+      List<Exprent> values = caseValues.get(i);
 
       for (int j = 0; j < edges.size(); j++) {
         if (edges.get(j) == default_edge) {
           buf.appendIndent(indent).append("default:").appendLineSeparator();
-          tracer.incrementCurrentSourceLine();
-        } else {
-          ConstExprent value = (ConstExprent) values.get(j).copy();
-          value.setConstType(switch_type);
-
-          buf.appendIndent(indent).append("case ").append(value.toJava(indent, tracer)).append(":").appendLineSeparator();
-          tracer.incrementCurrentSourceLine();
         }
+        else {
+          buf.appendIndent(indent).append("case ");
+          Exprent value = values.get(j);
+          if (value instanceof ConstExprent) {
+            value = value.copy();
+            ((ConstExprent)value).setConstType(switch_type);
+          }
+          if (value instanceof FieldExprent && ((FieldExprent)value).isStatic()) { // enum values
+            buf.append(((FieldExprent)value).getName());
+          }
+          else {
+            buf.append(value.toJava(indent, tracer));
+          }
+
+          buf.append(":").appendLineSeparator();
+        }
+        tracer.incrementCurrentSourceLine();
       }
 
       buf.append(ExprProcessor.jmpWrapper(stat, indent + 1, false, tracer));
@@ -155,13 +151,15 @@ public class SwitchStatement extends Statement {
     return buf;
   }
 
+  @Override
   public void initExprents() {
-    SwitchExprent swexpr = (SwitchExprent) first.getExprents().remove(first.getExprents().size() - 1);
+    SwitchExprent swexpr = (SwitchExprent)first.getExprents().remove(first.getExprents().size() - 1);
     swexpr.setCaseValues(caseValues);
 
     headexprent.set(0, swexpr);
   }
 
+  @Override
   public List<Object> getSequentialObjects() {
 
     List<Object> lst = new ArrayList<>(stats);
@@ -170,12 +168,14 @@ public class SwitchStatement extends Statement {
     return lst;
   }
 
+  @Override
   public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
     if (headexprent.get(0) == oldexpr) {
       headexprent.set(0, newexpr);
     }
   }
 
+  @Override
   public void replaceStatement(Statement oldstat, Statement newstat) {
 
     for (int i = 0; i < caseStatements.size(); i++) {
@@ -187,10 +187,12 @@ public class SwitchStatement extends Statement {
     super.replaceStatement(oldstat, newstat);
   }
 
+  @Override
   public Statement getSimpleCopy() {
     return new SwitchStatement();
   }
 
+  @Override
   public void initSimpleCopy() {
     first = stats.get(0);
     default_edge = first.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL).get(0);
@@ -212,11 +214,11 @@ public class SwitchStatement extends Statement {
     }
 
     // case values
-    BasicBlockStatement bbstat = (BasicBlockStatement) first;
-    int[] values = ((SwitchInstruction) bbstat.getBlock().getLastInstruction()).getValues();
+    BasicBlockStatement bbstat = (BasicBlockStatement)first;
+    int[] values = ((SwitchInstruction)bbstat.getBlock().getLastInstruction()).getValues();
 
-    List<Statement> nodes = new ArrayList<>();
-    List<List<Integer>> edges = new ArrayList<>();
+    List<Statement> nodes = new ArrayList<>(stats.size() - 1);
+    List<List<Integer>> edges = new ArrayList<>(stats.size() - 1);
 
     // collect regular edges
     for (int i = 1; i < stats.size(); i++) {
@@ -273,7 +275,8 @@ public class SwitchStatement extends Statement {
         setPreds.remove(first);
 
         if (!setPreds.isEmpty()) {
-          Statement pred = setPreds.iterator().next(); // assumption: at most one predecessor node besides the head. May not hold true for obfuscated code.
+          Statement pred =
+            setPreds.iterator().next(); // assumption: at most one predecessor node besides the head. May not hold true for obfuscated code.
           for (int j = 0; j < nodes.size(); j++) {
             if (j != (index - 1) && nodes.get(j) == pred) {
               nodes.add(j + 1, stat);
@@ -283,7 +286,8 @@ public class SwitchStatement extends Statement {
                 nodes.remove(index);
                 edges.remove(index);
                 index--;
-              } else {
+              }
+              else {
                 nodes.remove(index + 1);
                 edges.remove(index + 1);
               }
@@ -295,12 +299,12 @@ public class SwitchStatement extends Statement {
     }
 
     // translate indices back into edges
-    List<List<StatEdge>> lstEdges = new ArrayList<>();
-    List<List<ConstExprent>> lstValues = new ArrayList<>();
+    List<List<StatEdge>> lstEdges = new ArrayList<>(edges.size());
+    List<List<Exprent>> lstValues = new ArrayList<>(edges.size());
 
     for (List<Integer> lst : edges) {
-      List<StatEdge> lste = new ArrayList<>();
-      List<ConstExprent> lstv = new ArrayList<>();
+      List<StatEdge> lste = new ArrayList<>(lst.size());
+      List<Exprent> lstv = new ArrayList<>(lst.size());
 
       List<StatEdge> lstSuccs = first.getSuccessorEdges(STATEDGE_DIRECT_ALL);
       for (Integer in : lst) {
@@ -316,8 +320,8 @@ public class SwitchStatement extends Statement {
     // replace null statements with dummy basic blocks
     for (int i = 0; i < nodes.size(); i++) {
       if (nodes.get(i) == null) {
-        BasicBlockStatement bstat = new BasicBlockStatement(
-            new BasicBlock(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
+        BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
+          DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
 
         StatEdge sample_edge = lstEdges.get(i).get(0);
 
@@ -364,7 +368,7 @@ public class SwitchStatement extends Statement {
     return default_edge;
   }
 
-  public List<List<ConstExprent>> getCaseValues() {
+  public List<List<Exprent>> getCaseValues() {
     return caseValues;
   }
 }

@@ -64,15 +64,15 @@ public class FernflowerDecompiler extends Decompiler implements IBytecodeProvide
                 map.put(key, JByteMod.ops.get("ff_" + key).getBoolean() ? "1" : "0");
             }
             Fernflower f = new Fernflower(this, this, map, new PrintStreamLogger(JByteMod.LOGGER));
-            StructContext sc = f.getStructContext();
-            StructClass cl = new StructClass(b, true, sc.getLoader());
+            StructContext sc = f.structContext;
+            StructClass cl = new StructClass(b, true, sc.loader);
             sc.getClasses().put(cn.name, cl);
             //instead of loading a file use custom bridge, created a few getters
             String fakePath = new File("none.class").getAbsolutePath();
-            ContextUnit unit = new ContextUnit(ContextUnit.TYPE_FOLDER, null, fakePath, true, sc.getSaver(), sc.getDecompiledData());
-            sc.getUnits().put(fakePath, unit);
+            ContextUnit unit = new ContextUnit(ContextUnit.TYPE_FOLDER, null, fakePath, true, sc.saver, sc.decompiledData);
+            sc.units.put(fakePath, unit);
             unit.addClass(cl, "none.class");
-            sc.getLoader().addClassLink(cn.name, new LazyLoader.Link(LazyLoader.Link.CLASS, fakePath, null));
+            sc.loader.addClassLink(cn.name, new LazyLoader.Link(fakePath, null));
 
             f.decompileContext();
             return returned;

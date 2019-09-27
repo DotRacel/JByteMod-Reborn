@@ -1,29 +1,17 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
-import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
+import org.jetbrains.java.decompiler.util.TextBuffer;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class IfExprent extends Exprent {
 
@@ -46,17 +34,33 @@ public class IfExprent extends Exprent {
   public static final int IF_ACMPEQ = 14;
   public static final int IF_ACMPNE = 15;
 
-  public static final int IF_CAND = 16;
-  public static final int IF_COR = 17;
-
-  public static final int IF_NOT = 18;
+  //public static final int IF_CAND = 16;
+  //public static final int IF_COR = 17;
+  //public static final int IF_NOT = 18;
   public static final int IF_VALUE = 19;
 
-  private static final int[] FUNC_TYPES = { FunctionExprent.FUNCTION_EQ, FunctionExprent.FUNCTION_NE, FunctionExprent.FUNCTION_LT,
-      FunctionExprent.FUNCTION_GE, FunctionExprent.FUNCTION_GT, FunctionExprent.FUNCTION_LE, FunctionExprent.FUNCTION_EQ, FunctionExprent.FUNCTION_NE,
-      FunctionExprent.FUNCTION_EQ, FunctionExprent.FUNCTION_NE, FunctionExprent.FUNCTION_LT, FunctionExprent.FUNCTION_GE, FunctionExprent.FUNCTION_GT,
-      FunctionExprent.FUNCTION_LE, FunctionExprent.FUNCTION_EQ, FunctionExprent.FUNCTION_NE, FunctionExprent.FUNCTION_CADD,
-      FunctionExprent.FUNCTION_COR, FunctionExprent.FUNCTION_BOOL_NOT, -1 };
+  private static final int[] FUNC_TYPES = {
+    FunctionExprent.FUNCTION_EQ,
+    FunctionExprent.FUNCTION_NE,
+    FunctionExprent.FUNCTION_LT,
+    FunctionExprent.FUNCTION_GE,
+    FunctionExprent.FUNCTION_GT,
+    FunctionExprent.FUNCTION_LE,
+    FunctionExprent.FUNCTION_EQ,
+    FunctionExprent.FUNCTION_NE,
+    FunctionExprent.FUNCTION_EQ,
+    FunctionExprent.FUNCTION_NE,
+    FunctionExprent.FUNCTION_LT,
+    FunctionExprent.FUNCTION_GE,
+    FunctionExprent.FUNCTION_GT,
+    FunctionExprent.FUNCTION_LE,
+    FunctionExprent.FUNCTION_EQ,
+    FunctionExprent.FUNCTION_NE,
+    FunctionExprent.FUNCTION_CADD,
+    FunctionExprent.FUNCTION_COR,
+    FunctionExprent.FUNCTION_BOOL_NOT,
+    -1
+  };
 
   private Exprent condition;
 
@@ -65,13 +69,15 @@ public class IfExprent extends Exprent {
 
     if (ifType <= IF_LE) {
       stack.push(new ConstExprent(0, true, null));
-    } else if (ifType <= IF_NONNULL) {
+    }
+    else if (ifType <= IF_NONNULL) {
       stack.push(new ConstExprent(VarType.VARTYPE_NULL, null, null));
     }
 
     if (ifType == IF_VALUE) {
       condition = stack.pop();
-    } else {
+    }
+    else {
       condition = new FunctionExprent(FUNC_TYPES[ifType], stack, bytecodeOffsets);
     }
   }
@@ -98,7 +104,7 @@ public class IfExprent extends Exprent {
   @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     tracer.addMapping(bytecode);
-    return condition.toJava(indent, tracer).enclose("if(", ")");
+    return condition.toJava(indent, tracer).enclose("if (", ")");
   }
 
   @Override
@@ -110,12 +116,10 @@ public class IfExprent extends Exprent {
 
   @Override
   public boolean equals(Object o) {
-    if (o == this)
-      return true;
-    if (o == null || !(o instanceof IfExprent))
-      return false;
+    if (o == this) return true;
+    if (!(o instanceof IfExprent)) return false;
 
-    IfExprent ie = (IfExprent) o;
+    IfExprent ie = (IfExprent)o;
     return InterpreterUtil.equalObjects(condition, ie.getCondition());
   }
 

@@ -1,37 +1,24 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.attr.StructExceptionsAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.TextBuffer;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class ExitExprent extends Exprent {
 
@@ -90,12 +77,13 @@ public class ExitExprent extends Exprent {
       }
 
       return buffer;
-    } else {
-      MethodWrapper method = (MethodWrapper) DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
-      ClassNode node = ((ClassNode) DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE));
+    }
+    else {
+      MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
+      ClassNode node = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE));
 
       if (method != null && node != null) {
-        StructExceptionsAttribute attr = (StructExceptionsAttribute) method.methodStruct.getAttributes().getWithKey("Exceptions");
+        StructExceptionsAttribute attr = method.methodStruct.getAttribute(StructGeneralAttribute.ATTRIBUTE_EXCEPTIONS);
 
         if (attr != null) {
           String classname = null;
@@ -105,7 +93,8 @@ public class ExitExprent extends Exprent {
             if ("java/lang/Throwable".equals(exClassName)) {
               classname = exClassName;
               break;
-            } else if ("java/lang/Exception".equals(exClassName)) {
+            }
+            else if ("java/lang/Exception".equals(exClassName)) {
               classname = exClassName;
             }
           }
@@ -132,13 +121,12 @@ public class ExitExprent extends Exprent {
 
   @Override
   public boolean equals(Object o) {
-    if (o == this)
-      return true;
-    if (o == null || !(o instanceof ExitExprent))
-      return false;
+    if (o == this) return true;
+    if (!(o instanceof ExitExprent)) return false;
 
-    ExitExprent et = (ExitExprent) o;
-    return exitType == et.getExitType() && InterpreterUtil.equalObjects(value, et.getValue());
+    ExitExprent et = (ExitExprent)o;
+    return exitType == et.getExitType() &&
+           InterpreterUtil.equalObjects(value, et.getValue());
   }
 
   public int getExitType() {
@@ -157,20 +145,13 @@ public class ExitExprent extends Exprent {
   // IMatchable implementation
   // *****************************************************************************
 
+  @Override
   public boolean match(MatchNode matchNode, MatchEngine engine) {
-
     if (!super.match(matchNode, engine)) {
       return false;
     }
 
-    Integer type = (Integer) matchNode.getRuleValue(MatchProperties.EXPRENT_EXITTYPE);
-    if (type != null) {
-      if (this.exitType != type.intValue()) {
-        return false;
-      }
-    }
-
-    return true;
+    Integer type = (Integer)matchNode.getRuleValue(MatchProperties.EXPRENT_EXITTYPE);
+    return type == null || this.exitType == type;
   }
-
 }

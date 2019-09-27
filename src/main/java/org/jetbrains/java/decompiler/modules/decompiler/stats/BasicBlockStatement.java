@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -20,10 +6,10 @@ import org.jetbrains.java.decompiler.code.Instruction;
 import org.jetbrains.java.decompiler.code.SimpleInstructionSequence;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 
 public class BasicBlockStatement extends Statement {
 
@@ -53,7 +39,8 @@ public class BasicBlockStatement extends Statement {
     if (instr != null) {
       if (instr.group == CodeConstants.GROUP_JUMP && instr.opcode != CodeConstants.opc_goto) {
         lastBasicType = LASTBASICTYPE_IF;
-      } else if (instr.group == CodeConstants.GROUP_SWITCH) {
+      }
+      else if (instr.group == CodeConstants.GROUP_SWITCH) {
         lastBasicType = LASTBASICTYPE_SWITCH;
       }
     }
@@ -66,15 +53,18 @@ public class BasicBlockStatement extends Statement {
   // public methods
   // *****************************************************************************
 
+  @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     TextBuffer tb = ExprProcessor.listToJava(varDefinitions, indent, tracer);
     tb.append(ExprProcessor.listToJava(exprents, indent, tracer));
     return tb;
   }
 
+  @Override
   public Statement getSimpleCopy() {
 
-    BasicBlock newblock = new BasicBlock(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER));
+    BasicBlock newblock = new BasicBlock(
+      DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER));
 
     SimpleInstructionSequence seq = new SimpleInstructionSequence();
     for (int i = 0; i < block.getSeq().length(); i++) {
@@ -85,6 +75,7 @@ public class BasicBlockStatement extends Statement {
 
     return new BasicBlockStatement(newblock);
   }
+
 
   // *****************************************************************************
   // getter and setter methods

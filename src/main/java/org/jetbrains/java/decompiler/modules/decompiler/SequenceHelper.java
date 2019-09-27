@@ -1,23 +1,5 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -26,7 +8,13 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatemen
 import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
+
 public class SequenceHelper {
+
 
   public static void condenseSequences(Statement root) {
     condenseSequencesRec(root);
@@ -36,8 +24,7 @@ public class SequenceHelper {
 
     if (stat.type == Statement.TYPE_SEQUENCE) {
 
-      List<Statement> lst = new ArrayList<>();
-      lst.addAll(stat.getStats());
+      List<Statement> lst = new ArrayList<>(stat.getStats());
 
       boolean unfolded = false;
 
@@ -46,7 +33,7 @@ public class SequenceHelper {
         Statement st = lst.get(i);
         if (st.type == Statement.TYPE_SEQUENCE) {
 
-          removeEmptyStatements((SequenceStatement) st);
+          removeEmptyStatements((SequenceStatement)st);
 
           if (i == lst.size() - 1 || isSequenceDisbandable(st, lst.get(i + 1))) {
             // move predecessors
@@ -61,13 +48,15 @@ public class SequenceHelper {
             Statement last = st.getStats().getLast();
             if (last.getAllSuccessorEdges().isEmpty() && i < lst.size() - 1) {
               last.addSuccessor(new StatEdge(StatEdge.TYPE_REGULAR, last, lst.get(i + 1)));
-            } else {
+            }
+            else {
               for (StatEdge edge : last.getAllSuccessorEdges()) {
                 if (i == lst.size() - 1) {
                   if (edge.closure == st) {
                     stat.addLabeledEdge(edge);
                   }
-                } else {
+                }
+                else {
                   edge.getSource().changeEdgeType(Statement.DIRECTION_FORWARD, edge, StatEdge.TYPE_REGULAR);
                   edge.closure.getLabelEdges().remove(edge);
                   edge.closure = null;
@@ -107,7 +96,7 @@ public class SequenceHelper {
     // sequence consisting of one statement -> disband
     if (stat.type == Statement.TYPE_SEQUENCE) {
 
-      removeEmptyStatements((SequenceStatement) stat);
+      removeEmptyStatements((SequenceStatement)stat);
 
       if (stat.getStats().size() == 1) {
 
@@ -136,7 +125,8 @@ public class SequenceHelper {
     }
 
     // replace flat statements with synthetic basic blocks
-    outer: while (true) {
+    outer:
+    while (true) {
       for (Statement st : stat.getStats()) {
         if ((st.getStats().isEmpty() || st.getExprents() != null) && st.type != Statement.TYPE_BASICBLOCK) {
           destroyAndFlattenStatement(st);
@@ -196,7 +186,8 @@ public class SequenceHelper {
               }
               found = true;
             }
-          } else {
+          }
+          else {
             StatEdge sucedge = st.getAllSuccessorEdges().get(0);
             if (sucedge.getType() != StatEdge.TYPE_FINALLYEXIT) {
               st.removeSuccessor(sucedge);
@@ -252,7 +243,8 @@ public class SequenceHelper {
             next.getExprents().addAll(0, current.getExprents());
             current.getExprents().clear();
             found = true;
-          } else {
+          }
+          else {
             Statement first = getFirstExprentlist(next);
             if (first != null) {
               first.getExprents().addAll(0, current.getExprents());
@@ -276,25 +268,27 @@ public class SequenceHelper {
     }
 
     switch (stat.type) {
-    case Statement.TYPE_IF:
-    case Statement.TYPE_SEQUENCE:
-    case Statement.TYPE_SWITCH:
-    case Statement.TYPE_SYNCRONIZED:
-      return getFirstExprentlist(stat.getFirst());
+      case Statement.TYPE_IF:
+      case Statement.TYPE_SEQUENCE:
+      case Statement.TYPE_SWITCH:
+      case Statement.TYPE_SYNCRONIZED:
+        return getFirstExprentlist(stat.getFirst());
     }
 
     return null;
   }
 
+
   public static void destroyAndFlattenStatement(Statement stat) {
 
     destroyStatementContent(stat, false);
 
-    BasicBlockStatement bstat = new BasicBlockStatement(
-        new BasicBlock(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
+    BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
+      DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
     if (stat.getExprents() == null) {
       bstat.setExprents(new ArrayList<>());
-    } else {
+    }
+    else {
       bstat.setExprents(DecHelper.copyExprentList(stat.getExprents()));
     }
 

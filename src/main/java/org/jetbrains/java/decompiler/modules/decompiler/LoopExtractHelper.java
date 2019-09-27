@@ -1,30 +1,18 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Set;
 
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Set;
+
+
 public class LoopExtractHelper {
+
 
   public static boolean extractLoops(Statement root) {
 
@@ -36,6 +24,7 @@ public class LoopExtractHelper {
 
     return res;
   }
+
 
   private static int extractLoopsRec(Statement stat) {
 
@@ -61,7 +50,7 @@ public class LoopExtractHelper {
     }
 
     if (stat.type == Statement.TYPE_DO) {
-      if (extractLoop((DoStatement) stat)) {
+      if (extractLoop((DoStatement)stat)) {
         return 2;
       }
     }
@@ -70,7 +59,6 @@ public class LoopExtractHelper {
   }
 
   private static boolean extractLoop(DoStatement stat) {
-
     if (stat.getLooptype() != DoStatement.LOOP_DO) {
       return false;
     }
@@ -81,11 +69,7 @@ public class LoopExtractHelper {
       }
     }
 
-    if (!extractLastIf(stat)) {
-      return extractFirstIf(stat);
-    } else {
-      return true;
-    }
+    return extractLastIf(stat) || extractFirstIf(stat);
   }
 
   private static boolean extractLastIf(DoStatement stat) {
@@ -97,7 +81,7 @@ public class LoopExtractHelper {
     }
 
     if (last.type == Statement.TYPE_IF) {
-      IfStatement lastif = (IfStatement) last;
+      IfStatement lastif = (IfStatement)last;
       if (lastif.iftype == IfStatement.IFTYPE_IF && lastif.getIfstat() != null) {
         Statement ifstat = lastif.getIfstat();
         StatEdge elseedge = lastif.getAllSuccessorEdges().get(0);
@@ -129,7 +113,7 @@ public class LoopExtractHelper {
 
     // found an if statement
     if (first.type == Statement.TYPE_IF) {
-      IfStatement firstif = (IfStatement) first;
+      IfStatement firstif = (IfStatement)first;
 
       if (firstif.getFirst().getExprents().isEmpty()) {
 
@@ -146,10 +130,12 @@ public class LoopExtractHelper {
     return false;
   }
 
+
   private static boolean isExternStatement(DoStatement loop, Statement block, Statement stat) {
 
     for (StatEdge edge : stat.getAllSuccessorEdges()) {
-      if (loop.containsStatement(edge.getDestination()) && !block.containsStatement(edge.getDestination())) {
+      if (loop.containsStatement(edge.getDestination()) &&
+          !block.containsStatement(edge.getDestination())) {
         return false;
       }
     }
@@ -162,6 +148,7 @@ public class LoopExtractHelper {
 
     return true;
   }
+
 
   private static void extractIfBlock(DoStatement loop, IfStatement ifstat) {
 

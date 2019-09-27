@@ -1,30 +1,18 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
-import java.util.Arrays;
-import java.util.List;
-
-import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.util.TextBuffer;
+
+import java.util.Arrays;
+import java.util.List;
+
 
 public class SequenceStatement extends Statement {
+
 
   // *****************************************************************************
   // constructors
@@ -34,7 +22,7 @@ public class SequenceStatement extends Statement {
     type = Statement.TYPE_SEQUENCE;
   }
 
-  public SequenceStatement(List<Statement> lst) {
+  public SequenceStatement(List<? extends Statement> lst) {
 
     this();
 
@@ -61,6 +49,7 @@ public class SequenceStatement extends Statement {
     }
   }
 
+
   // *****************************************************************************
   // public methods
   // *****************************************************************************
@@ -81,7 +70,8 @@ public class SequenceStatement extends Statement {
     if (edge != null && edge.getType() == StatEdge.TYPE_REGULAR) {
       Statement stat = edge.getDestination();
 
-      if (stat != head && stat.getPredecessorEdges(StatEdge.TYPE_REGULAR).size() == 1 && !stat.isMonitorEnter()) {
+      if (stat != head && stat.getPredecessorEdges(StatEdge.TYPE_REGULAR).size() == 1
+          && !stat.isMonitorEnter()) {
 
         if (stat.getLastBasicType() == Statement.LASTBASICTYPE_GENERAL) {
           if (DecHelper.checkStatementExceptions(Arrays.asList(head, stat))) {
@@ -94,6 +84,7 @@ public class SequenceStatement extends Statement {
     return null;
   }
 
+  @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     TextBuffer buf = new TextBuffer();
     boolean islabeled = isLabeled();
@@ -123,13 +114,14 @@ public class SequenceStatement extends Statement {
     }
 
     if (islabeled) {
-      buf.appendIndent(indent - 1).append("}").appendLineSeparator();
+      buf.appendIndent(indent-1).append("}").appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
 
     return buf;
   }
 
+  @Override
   public Statement getSimpleCopy() {
     return new SequenceStatement();
   }

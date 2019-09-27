@@ -1,19 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.attr;
+
+import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.TypeAnnotation;
+import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -21,24 +12,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.TypeAnnotation;
-import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
-
 public class StructTypeAnnotationAttribute extends StructGeneralAttribute {
   private List<TypeAnnotation> annotations = Collections.emptyList();
 
   @Override
-  public void initContent(ConstantPool pool) throws IOException {
-    DataInputStream data = stream();
-
+  public void initContent(DataInputFullStream data, ConstantPool pool) throws IOException {
     int len = data.readUnsignedShort();
     if (len > 0) {
       annotations = new ArrayList<>(len);
       for (int i = 0; i < len; i++) {
         annotations.add(parse(data, pool));
       }
-    } else {
+    }
+    else {
       annotations = Collections.emptyList();
     }
   }
@@ -48,44 +34,44 @@ public class StructTypeAnnotationAttribute extends StructGeneralAttribute {
     int target = targetType << 24;
 
     switch (targetType) {
-    case TypeAnnotation.CLASS_TYPE_PARAMETER:
-    case TypeAnnotation.METHOD_TYPE_PARAMETER:
-    case TypeAnnotation.METHOD_PARAMETER:
-      target |= data.readUnsignedByte();
-      break;
+      case TypeAnnotation.CLASS_TYPE_PARAMETER:
+      case TypeAnnotation.METHOD_TYPE_PARAMETER:
+      case TypeAnnotation.METHOD_PARAMETER:
+        target |= data.readUnsignedByte();
+        break;
 
-    case TypeAnnotation.SUPER_TYPE_REFERENCE:
-    case TypeAnnotation.CLASS_TYPE_PARAMETER_BOUND:
-    case TypeAnnotation.METHOD_TYPE_PARAMETER_BOUND:
-    case TypeAnnotation.THROWS_REFERENCE:
-    case TypeAnnotation.CATCH_CLAUSE:
-    case TypeAnnotation.EXPR_INSTANCEOF:
-    case TypeAnnotation.EXPR_NEW:
-    case TypeAnnotation.EXPR_CONSTRUCTOR_REF:
-    case TypeAnnotation.EXPR_METHOD_REF:
-      target |= data.readUnsignedShort();
-      break;
+      case TypeAnnotation.SUPER_TYPE_REFERENCE:
+      case TypeAnnotation.CLASS_TYPE_PARAMETER_BOUND:
+      case TypeAnnotation.METHOD_TYPE_PARAMETER_BOUND:
+      case TypeAnnotation.THROWS_REFERENCE:
+      case TypeAnnotation.CATCH_CLAUSE:
+      case TypeAnnotation.EXPR_INSTANCEOF:
+      case TypeAnnotation.EXPR_NEW:
+      case TypeAnnotation.EXPR_CONSTRUCTOR_REF:
+      case TypeAnnotation.EXPR_METHOD_REF:
+        target |= data.readUnsignedShort();
+        break;
 
-    case TypeAnnotation.TYPE_ARG_CAST:
-    case TypeAnnotation.TYPE_ARG_CONSTRUCTOR_CALL:
-    case TypeAnnotation.TYPE_ARG_METHOD_CALL:
-    case TypeAnnotation.TYPE_ARG_CONSTRUCTOR_REF:
-    case TypeAnnotation.TYPE_ARG_METHOD_REF:
-      data.skipBytes(3);
-      break;
+      case TypeAnnotation.TYPE_ARG_CAST:
+      case TypeAnnotation.TYPE_ARG_CONSTRUCTOR_CALL:
+      case TypeAnnotation.TYPE_ARG_METHOD_CALL:
+      case TypeAnnotation.TYPE_ARG_CONSTRUCTOR_REF:
+      case TypeAnnotation.TYPE_ARG_METHOD_REF:
+        data.skipBytes(3);
+        break;
 
-    case TypeAnnotation.LOCAL_VARIABLE:
-    case TypeAnnotation.RESOURCE_VARIABLE:
-      data.skipBytes(data.readUnsignedShort() * 6);
-      break;
+      case TypeAnnotation.LOCAL_VARIABLE:
+      case TypeAnnotation.RESOURCE_VARIABLE:
+        data.skipBytes(data.readUnsignedShort() * 6);
+        break;
 
-    case TypeAnnotation.FIELD:
-    case TypeAnnotation.METHOD_RETURN_TYPE:
-    case TypeAnnotation.METHOD_RECEIVER:
-      break;
+      case TypeAnnotation.FIELD:
+      case TypeAnnotation.METHOD_RETURN_TYPE:
+      case TypeAnnotation.METHOD_RECEIVER:
+        break;
 
-    default:
-      throw new RuntimeException("unknown target type: " + targetType);
+      default:
+        throw new RuntimeException("unknown target type: " + targetType);
     }
 
     int pathLength = data.readUnsignedByte();

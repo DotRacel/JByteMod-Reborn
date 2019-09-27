@@ -1,23 +1,5 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
@@ -28,23 +10,16 @@ import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.SecondaryFunctionsHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.AssertExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.FieldExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.NewExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class AssertProcessor {
 
@@ -98,17 +73,20 @@ public class AssertProcessor {
 
             Exprent initializer = wrapper.getStaticFieldInitializers().getWithKey(keyField);
             if (initializer.type == Exprent.EXPRENT_FUNCTION) {
-              FunctionExprent fexpr = (FunctionExprent) initializer;
+              FunctionExprent fexpr = (FunctionExprent)initializer;
 
-              if (fexpr.getFuncType() == FunctionExprent.FUNCTION_BOOL_NOT && fexpr.getLstOperands().get(0).type == Exprent.EXPRENT_INVOCATION) {
+              if (fexpr.getFuncType() == FunctionExprent.FUNCTION_BOOL_NOT &&
+                  fexpr.getLstOperands().get(0).type == Exprent.EXPRENT_INVOCATION) {
 
-                InvocationExprent invexpr = (InvocationExprent) fexpr.getLstOperands().get(0);
+                InvocationExprent invexpr = (InvocationExprent)fexpr.getLstOperands().get(0);
 
-                if (invexpr.getInstance() != null && invexpr.getInstance().type == Exprent.EXPRENT_CONST
-                    && "desiredAssertionStatus".equals(invexpr.getName()) && "java/lang/Class".equals(invexpr.getClassname())
-                    && invexpr.getLstParameters().isEmpty()) {
+                if (invexpr.getInstance() != null &&
+                    invexpr.getInstance().type == Exprent.EXPRENT_CONST &&
+                    "desiredAssertionStatus".equals(invexpr.getName()) &&
+                    "java/lang/Class".equals(invexpr.getClassname()) &&
+                    invexpr.getLstParameters().isEmpty()) {
 
-                  ConstExprent cexpr = (ConstExprent) invexpr.getInstance();
+                  ConstExprent cexpr = (ConstExprent)invexpr.getInstance();
                   if (VarType.VARTYPE_CLASS.equals(cexpr.getConstType())) {
 
                     ClassNode nd = node;
@@ -131,8 +109,10 @@ public class AssertProcessor {
       }
     }
 
+
     return null;
   }
+
 
   private static boolean replaceAssertions(Statement statement, String classname, String key) {
 
@@ -148,7 +128,7 @@ public class AssertProcessor {
 
       for (Statement st : statement.getStats()) {
         if (st.type == Statement.TYPE_IF) {
-          if (replaceAssertion(statement, (IfStatement) st, classname, key)) {
+          if (replaceAssertion(statement, (IfStatement)st, classname, key)) {
             replaced = true;
             break;
           }
@@ -172,14 +152,16 @@ public class AssertProcessor {
       Statement elsestat = stat.getElsestat();
       throwError = isAssertionError(elsestat);
       if (throwError == null) {
-        return false;
-      } else {
-        throwInIf = false;
+          return false;
+      }
+      else {
+          throwInIf = false;
       }
     }
 
+
     Object[] exprres = getAssertionExprent(stat.getHeadexprent().getCondition().copy(), classname, key, throwInIf);
-    if (!(Boolean) exprres[1]) {
+    if (!(Boolean)exprres[1]) {
       return false;
     }
 
@@ -188,13 +170,15 @@ public class AssertProcessor {
     Exprent ascond = null, retcond = null;
     if (throwInIf) {
       if (exprres[0] != null) {
-        ascond = new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, (Exprent) exprres[0], throwError.bytecode);
+        ascond = new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, (Exprent)exprres[0], throwError.bytecode);
         retcond = SecondaryFunctionsHelper.propagateBoolNot(ascond);
       }
-    } else {
-      ascond = (Exprent) exprres[0];
-      retcond = ascond;
     }
+    else {
+        ascond =  (Exprent) exprres[0];
+        retcond = ascond;
+    }
+
 
     lstParams.add(retcond == null ? ascond : retcond);
     if (!throwError.getLstParameters().isEmpty()) {
@@ -203,13 +187,14 @@ public class AssertProcessor {
 
     AssertExprent asexpr = new AssertExprent(lstParams);
 
-    Statement newstat = new BasicBlockStatement(
-        new BasicBlock(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
-    newstat.setExprents(Arrays.asList(new Exprent[] { asexpr }));
+    Statement newstat = new BasicBlockStatement(new BasicBlock(
+      DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
+    newstat.setExprents(Arrays.asList(new Exprent[]{asexpr}));
 
     Statement first = stat.getFirst();
 
-    if (stat.iftype == IfStatement.IFTYPE_IFELSE || (first.getExprents() != null && !first.getExprents().isEmpty())) {
+    if (stat.iftype == IfStatement.IFTYPE_IFELSE || (first.getExprents() != null &&
+                                                     !first.getExprents().isEmpty())) {
 
       first.removeSuccessor(stat.getIfEdge());
       first.removeSuccessor(stat.getElseEdge());
@@ -222,7 +207,8 @@ public class AssertProcessor {
       if (stat.iftype == IfStatement.IFTYPE_IFELSE) {
         if (throwInIf) {
           lstStatements.add(stat.getElsestat());
-        } else {
+        }
+        else {
           lstStatements.add(stat.getIfstat());
         }
       }
@@ -231,14 +217,16 @@ public class AssertProcessor {
       sequence.setAllParent();
 
       for (int i = 0; i < sequence.getStats().size() - 1; i++) {
-        sequence.getStats().get(i).addSuccessor(new StatEdge(StatEdge.TYPE_REGULAR, sequence.getStats().get(i), sequence.getStats().get(i + 1)));
+        sequence.getStats().get(i).addSuccessor(new StatEdge(StatEdge.TYPE_REGULAR,
+                                                             sequence.getStats().get(i), sequence.getStats().get(i + 1)));
       }
 
       if (stat.iftype == IfStatement.IFTYPE_IFELSE || !throwInIf) {
         Statement stmts;
         if (throwInIf) {
           stmts = stat.getElsestat();
-        } else {
+        }
+        else {
           stmts = stat.getIfstat();
         }
 
@@ -269,9 +257,9 @@ public class AssertProcessor {
     Exprent expr = stat.getExprents().get(0);
 
     if (expr.type == Exprent.EXPRENT_EXIT) {
-      ExitExprent exexpr = (ExitExprent) expr;
+      ExitExprent exexpr = (ExitExprent)expr;
       if (exexpr.getExitType() == ExitExprent.EXIT_THROW && exexpr.getValue().type == Exprent.EXPRENT_NEW) {
-        NewExprent nexpr = (NewExprent) exexpr.getValue();
+        NewExprent nexpr = (NewExprent)exexpr.getValue();
         if (CLASS_ASSERTION_ERROR.equals(nexpr.getNewType()) && nexpr.getConstructor() != null) {
           return nexpr.getConstructor();
         }
@@ -289,14 +277,14 @@ public class AssertProcessor {
         desiredOperation = FunctionExprent.FUNCTION_COR;
       }
 
-      FunctionExprent fexpr = (FunctionExprent) exprent;
+      FunctionExprent fexpr = (FunctionExprent)exprent;
       if (fexpr.getFuncType() == desiredOperation) {
 
         for (int i = 0; i < 2; i++) {
           Exprent param = fexpr.getLstOperands().get(i);
 
           if (isAssertionField(param, classname, key, throwInIf)) {
-            return new Object[] { fexpr.getLstOperands().get(1 - i), true };
+            return new Object[]{fexpr.getLstOperands().get(1 - i), true};
           }
         }
 
@@ -304,44 +292,42 @@ public class AssertProcessor {
           Exprent param = fexpr.getLstOperands().get(i);
 
           Object[] res = getAssertionExprent(param, classname, key, throwInIf);
-          if ((Boolean) res[1]) {
+          if ((Boolean)res[1]) {
             if (param != res[0]) {
-              fexpr.getLstOperands().set(i, (Exprent) res[0]);
+              fexpr.getLstOperands().set(i, (Exprent)res[0]);
             }
-            return new Object[] { fexpr, true };
+            return new Object[]{fexpr, true};
           }
         }
-      } else if (isAssertionField(fexpr, classname, key, throwInIf)) {
+      }
+      else if (isAssertionField(fexpr, classname, key, throwInIf)) {
         // assert false;
-        return new Object[] { null, true };
+        return new Object[]{null, true};
       }
     }
 
-    return new Object[] { exprent, false };
+    return new Object[]{exprent, false};
   }
 
   private static boolean isAssertionField(Exprent exprent, String classname, String key, boolean throwInIf) {
     if (throwInIf) {
       if (exprent.type == Exprent.EXPRENT_FUNCTION) {
-        FunctionExprent fparam = (FunctionExprent) exprent;
-        if (fparam.getFuncType() == FunctionExprent.FUNCTION_BOOL_NOT && fparam.getLstOperands().get(0).type == Exprent.EXPRENT_FIELD) {
-          FieldExprent fdparam = (FieldExprent) fparam.getLstOperands().get(0);
-          if (classname.equals(fdparam.getClassname())
-              && key.equals(InterpreterUtil.makeUniqueKey(fdparam.getName(), fdparam.getDescriptor().descriptorString))) {
-            return true;
-          }
+        FunctionExprent fparam = (FunctionExprent)exprent;
+        if (fparam.getFuncType() == FunctionExprent.FUNCTION_BOOL_NOT &&
+            fparam.getLstOperands().get(0).type == Exprent.EXPRENT_FIELD) {
+          FieldExprent fdparam = (FieldExprent)fparam.getLstOperands().get(0);
+          return classname.equals(fdparam.getClassname()) &&
+                 key.equals(InterpreterUtil.makeUniqueKey(fdparam.getName(), fdparam.getDescriptor().descriptorString));
         }
       }
-      return false;
-    } else {
+    }
+    else {
       if (exprent.type == Exprent.EXPRENT_FIELD) {
         FieldExprent fdparam = (FieldExprent) exprent;
-        if (classname.equals(fdparam.getClassname())
-            && key.equals(InterpreterUtil.makeUniqueKey(fdparam.getName(), fdparam.getDescriptor().descriptorString))) {
-          return true;
-        }
+        return classname.equals(fdparam.getClassname()) &&
+               key.equals(InterpreterUtil.makeUniqueKey(fdparam.getName(), fdparam.getDescriptor().descriptorString));
       }
-      return false;
     }
+    return false;
   }
 }

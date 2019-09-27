@@ -1,38 +1,26 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.deobfuscator;
-
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+
+
 public class IrreducibleCFGDeobfuscator {
+
 
   public static boolean isStatementIrreducible(Statement statement) {
 
     class Node {
-      public Integer id;
+      public final Integer id;
       public final Set<Node> preds = new HashSet<>();
       public final Set<Node> succs = new HashSet<>();
 
-      public Node(Integer id) {
+      Node(Integer id) {
         this.id = id;
       }
     }
@@ -68,7 +56,8 @@ public class IrreducibleCFGDeobfuscator {
       for (Node nd : mapNodes.values()) {
         if (nd.succs.contains(nd)) { // T1
           ttype = 1;
-        } else if (nd.preds.size() == 1) { // T2
+        }
+        else if (nd.preds.size() == 1) { // T2
           ttype = 2;
         }
 
@@ -82,7 +71,8 @@ public class IrreducibleCFGDeobfuscator {
         if (ttype == 1) {
           node.succs.remove(node);
           node.preds.remove(node);
-        } else {
+        }
+        else {
           Node pred = node.preds.iterator().next();
 
           pred.succs.addAll(node.succs);
@@ -95,11 +85,13 @@ public class IrreducibleCFGDeobfuscator {
 
           mapNodes.remove(node.id);
         }
-      } else { // no transformation applicable
+      }
+      else { // no transformation applicable
         return mapNodes.size() > 1; // reducible iff one node remains
       }
     }
   }
+
 
   private static Statement getCandidateForSplitting(Statement statement) {
 
@@ -116,7 +108,8 @@ public class IrreducibleCFGDeobfuscator {
         if (succCount <= succsCandidateForSplitting) {
           int size = getStatementSize(stat) * (setPreds.size() - 1);
 
-          if (succCount < succsCandidateForSplitting || size < sizeCandidateForSplitting) {
+          if (succCount < succsCandidateForSplitting ||
+              size < sizeCandidateForSplitting) {
             candidateForSplitting = stat;
             sizeCandidateForSplitting = size;
             succsCandidateForSplitting = succCount;
@@ -147,7 +140,8 @@ public class IrreducibleCFGDeobfuscator {
 
     // switch input edges
     for (StatEdge prededge : splitnode.getPredecessorEdges(Statement.STATEDGE_DIRECT_ALL)) {
-      if (prededge.getSource() == enteredge.getSource() || prededge.closure == enteredge.getSource()) {
+      if (prededge.getSource() == enteredge.getSource() ||
+          prededge.closure == enteredge.getSource()) {
         splitnode.removePredecessor(prededge);
         prededge.getSource().changeEdgeNode(Statement.DIRECTION_FORWARD, prededge, splitcopy);
         splitcopy.addPredecessor(prededge);
@@ -167,8 +161,9 @@ public class IrreducibleCFGDeobfuscator {
     int res;
 
     if (statement.type == Statement.TYPE_BASICBLOCK) {
-      res = ((BasicBlockStatement) statement).getBlock().getSeq().length();
-    } else {
+      res = ((BasicBlockStatement)statement).getBlock().getSeq().length();
+    }
+    else {
       res = statement.getStats().stream().mapToInt(IrreducibleCFGDeobfuscator::getStatementSize).sum();
     }
 
@@ -199,8 +194,12 @@ public class IrreducibleCFGDeobfuscator {
       for (StatEdge edgeold : stold.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL)) {
         // type cannot be TYPE_EXCEPTION (checked in isIrreducibleTriangle)
         StatEdge edgenew = new StatEdge(edgeold.getType(), stnew,
-            mapAltToCopies.containsKey(edgeold.getDestination()) ? mapAltToCopies.get(edgeold.getDestination()) : edgeold.getDestination(),
-            mapAltToCopies.containsKey(edgeold.closure) ? mapAltToCopies.get(edgeold.closure) : edgeold.closure);
+                                        mapAltToCopies.containsKey(edgeold.getDestination())
+                                        ? mapAltToCopies.get(edgeold.getDestination())
+                                        : edgeold.getDestination(),
+                                        mapAltToCopies.containsKey(edgeold.closure)
+                                        ? mapAltToCopies.get(edgeold.closure)
+                                        : edgeold.closure);
 
         stnew.addSuccessor(edgenew);
       }

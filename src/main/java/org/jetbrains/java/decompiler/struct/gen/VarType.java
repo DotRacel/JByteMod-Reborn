@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.gen;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
-public class VarType { // TODO: optimize switch
+public class VarType {  // TODO: optimize switch
 
   public static final VarType[] EMPTY_ARRAY = {};
 
@@ -38,6 +24,10 @@ public class VarType { // TODO: optimize switch
   public static final VarType VARTYPE_STRING = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/String");
   public static final VarType VARTYPE_CLASS = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Class");
   public static final VarType VARTYPE_OBJECT = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Object");
+  public static final VarType VARTYPE_INTEGER = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Integer");
+  public static final VarType VARTYPE_CHARACTER = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Character");
+  public static final VarType VARTYPE_BYTE_OBJ = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Byte");
+  public static final VarType VARTYPE_SHORT_OBJ = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Short");
   public static final VarType VARTYPE_VOID = new VarType(CodeConstants.TYPE_VOID);
 
   public final int type;
@@ -77,27 +67,29 @@ public class VarType { // TODO: optimize switch
     int arrayDim = 0;
     String value = null;
 
-    loop: for (int i = 0; i < signature.length(); i++) {
+    loop:
+    for (int i = 0; i < signature.length(); i++) {
       switch (signature.charAt(i)) {
-      case '[':
-        arrayDim++;
-        break;
+        case '[':
+          arrayDim++;
+          break;
 
-      case 'L':
-        if (signature.charAt(signature.length() - 1) == ';') {
-          type = CodeConstants.TYPE_OBJECT;
-          value = signature.substring(i + 1, signature.length() - 1);
+        case 'L':
+          if (signature.charAt(signature.length() - 1) == ';') {
+            type = CodeConstants.TYPE_OBJECT;
+            value = signature.substring(i + 1, signature.length() - 1);
+            break loop;
+          }
+
+        default:
+          value = signature.substring(i);
+          if ((clType && i == 0) || value.length() > 1) {
+            type = CodeConstants.TYPE_OBJECT;
+          }
+          else {
+            type = getType(value.charAt(0));
+          }
           break loop;
-        }
-
-      default:
-        value = signature.substring(i, signature.length());
-        if ((clType && i == 0) || value.length() > 1) {
-          type = CodeConstants.TYPE_OBJECT;
-        } else {
-          type = getType(value.charAt(0));
-        }
-        break loop;
       }
     }
 
@@ -111,41 +103,41 @@ public class VarType { // TODO: optimize switch
 
   private static String getChar(int type) {
     switch (type) {
-    case CodeConstants.TYPE_BYTE:
-      return "B";
-    case CodeConstants.TYPE_CHAR:
-      return "C";
-    case CodeConstants.TYPE_DOUBLE:
-      return "D";
-    case CodeConstants.TYPE_FLOAT:
-      return "F";
-    case CodeConstants.TYPE_INT:
-      return "I";
-    case CodeConstants.TYPE_LONG:
-      return "J";
-    case CodeConstants.TYPE_SHORT:
-      return "S";
-    case CodeConstants.TYPE_BOOLEAN:
-      return "Z";
-    case CodeConstants.TYPE_VOID:
-      return "V";
-    case CodeConstants.TYPE_GROUP2EMPTY:
-      return "G";
-    case CodeConstants.TYPE_NOTINITIALIZED:
-      return "N";
-    case CodeConstants.TYPE_ADDRESS:
-      return "A";
-    case CodeConstants.TYPE_BYTECHAR:
-      return "X";
-    case CodeConstants.TYPE_SHORTCHAR:
-      return "Y";
-    case CodeConstants.TYPE_UNKNOWN:
-      return "U";
-    case CodeConstants.TYPE_NULL:
-    case CodeConstants.TYPE_OBJECT:
-      return null;
-    default:
-      throw new RuntimeException("Invalid type");
+      case CodeConstants.TYPE_BYTE:
+        return "B";
+      case CodeConstants.TYPE_CHAR:
+        return "C";
+      case CodeConstants.TYPE_DOUBLE:
+        return "D";
+      case CodeConstants.TYPE_FLOAT:
+        return "F";
+      case CodeConstants.TYPE_INT:
+        return "I";
+      case CodeConstants.TYPE_LONG:
+        return "J";
+      case CodeConstants.TYPE_SHORT:
+        return "S";
+      case CodeConstants.TYPE_BOOLEAN:
+        return "Z";
+      case CodeConstants.TYPE_VOID:
+        return "V";
+      case CodeConstants.TYPE_GROUP2EMPTY:
+        return "G";
+      case CodeConstants.TYPE_NOTINITIALIZED:
+        return "N";
+      case CodeConstants.TYPE_ADDRESS:
+        return "A";
+      case CodeConstants.TYPE_BYTECHAR:
+        return "X";
+      case CodeConstants.TYPE_SHORTCHAR:
+        return "Y";
+      case CodeConstants.TYPE_UNKNOWN:
+        return "U";
+      case CodeConstants.TYPE_NULL:
+      case CodeConstants.TYPE_OBJECT:
+        return null;
+      default:
+        throw new RuntimeException("Invalid type");
     }
   }
 
@@ -155,14 +147,14 @@ public class VarType { // TODO: optimize switch
     }
 
     switch (type) {
-    case CodeConstants.TYPE_DOUBLE:
-    case CodeConstants.TYPE_LONG:
-      return 2;
-    case CodeConstants.TYPE_VOID:
-    case CodeConstants.TYPE_GROUP2EMPTY:
-      return 0;
-    default:
-      return 1;
+      case CodeConstants.TYPE_DOUBLE:
+      case CodeConstants.TYPE_LONG:
+        return 2;
+      case CodeConstants.TYPE_VOID:
+      case CodeConstants.TYPE_GROUP2EMPTY:
+        return 0;
+      default:
+        return 1;
     }
   }
 
@@ -172,33 +164,34 @@ public class VarType { // TODO: optimize switch
     }
 
     switch (type) {
-    case CodeConstants.TYPE_BYTE:
-    case CodeConstants.TYPE_BYTECHAR:
-    case CodeConstants.TYPE_SHORTCHAR:
-    case CodeConstants.TYPE_CHAR:
-    case CodeConstants.TYPE_SHORT:
-    case CodeConstants.TYPE_INT:
-      return CodeConstants.TYPE_FAMILY_INTEGER;
-    case CodeConstants.TYPE_DOUBLE:
-      return CodeConstants.TYPE_FAMILY_DOUBLE;
-    case CodeConstants.TYPE_FLOAT:
-      return CodeConstants.TYPE_FAMILY_FLOAT;
-    case CodeConstants.TYPE_LONG:
-      return CodeConstants.TYPE_FAMILY_LONG;
-    case CodeConstants.TYPE_BOOLEAN:
-      return CodeConstants.TYPE_FAMILY_BOOLEAN;
-    case CodeConstants.TYPE_NULL:
-    case CodeConstants.TYPE_OBJECT:
-      return CodeConstants.TYPE_FAMILY_OBJECT;
-    default:
-      return CodeConstants.TYPE_FAMILY_UNKNOWN;
+      case CodeConstants.TYPE_BYTE:
+      case CodeConstants.TYPE_BYTECHAR:
+      case CodeConstants.TYPE_SHORTCHAR:
+      case CodeConstants.TYPE_CHAR:
+      case CodeConstants.TYPE_SHORT:
+      case CodeConstants.TYPE_INT:
+        return CodeConstants.TYPE_FAMILY_INTEGER;
+      case CodeConstants.TYPE_DOUBLE:
+        return CodeConstants.TYPE_FAMILY_DOUBLE;
+      case CodeConstants.TYPE_FLOAT:
+        return CodeConstants.TYPE_FAMILY_FLOAT;
+      case CodeConstants.TYPE_LONG:
+        return CodeConstants.TYPE_FAMILY_LONG;
+      case CodeConstants.TYPE_BOOLEAN:
+        return CodeConstants.TYPE_FAMILY_BOOLEAN;
+      case CodeConstants.TYPE_NULL:
+      case CodeConstants.TYPE_OBJECT:
+        return CodeConstants.TYPE_FAMILY_OBJECT;
+      default:
+        return CodeConstants.TYPE_FAMILY_UNKNOWN;
     }
   }
 
   public VarType decreaseArrayDim() {
     if (arrayDim > 0) {
       return new VarType(type, arrayDim - 1, value);
-    } else {
+    }
+    else {
       //throw new RuntimeException("array dimension equals 0!"); FIXME: investigate this case
       return this;
     }
@@ -233,32 +226,34 @@ public class VarType { // TODO: optimize switch
 
     if (val.arrayDim > 0) {
       return this.equals(VARTYPE_OBJECT);
-    } else if (arrayDim > 0) {
+    }
+    else if (arrayDim > 0) {
       return (valType == CodeConstants.TYPE_NULL);
     }
 
     boolean res = false;
 
     switch (type) {
-    case CodeConstants.TYPE_INT:
-      res = (valType == CodeConstants.TYPE_SHORT || valType == CodeConstants.TYPE_CHAR);
-    case CodeConstants.TYPE_SHORT:
-      res |= (valType == CodeConstants.TYPE_BYTE);
-    case CodeConstants.TYPE_CHAR:
-      res |= (valType == CodeConstants.TYPE_SHORTCHAR);
-    case CodeConstants.TYPE_BYTE:
-    case CodeConstants.TYPE_SHORTCHAR:
-      res |= (valType == CodeConstants.TYPE_BYTECHAR);
-    case CodeConstants.TYPE_BYTECHAR:
-      res |= (valType == CodeConstants.TYPE_BOOLEAN);
-      break;
+      case CodeConstants.TYPE_INT:
+        res = (valType == CodeConstants.TYPE_SHORT || valType == CodeConstants.TYPE_CHAR);
+      case CodeConstants.TYPE_SHORT:
+        res |= (valType == CodeConstants.TYPE_BYTE);
+      case CodeConstants.TYPE_CHAR:
+        res |= (valType == CodeConstants.TYPE_SHORTCHAR);
+      case CodeConstants.TYPE_BYTE:
+      case CodeConstants.TYPE_SHORTCHAR:
+        res |= (valType == CodeConstants.TYPE_BYTECHAR);
+      case CodeConstants.TYPE_BYTECHAR:
+        res |= (valType == CodeConstants.TYPE_BOOLEAN);
+        break;
 
-    case CodeConstants.TYPE_OBJECT:
-      if (valType == CodeConstants.TYPE_NULL) {
-        return true;
-      } else if (this.equals(VARTYPE_OBJECT)) {
-        return valType == CodeConstants.TYPE_OBJECT && !val.equals(VARTYPE_OBJECT);
-      }
+      case CodeConstants.TYPE_OBJECT:
+        if (valType == CodeConstants.TYPE_NULL) {
+          return true;
+        }
+        else if (this.equals(VARTYPE_OBJECT)) {
+          return valType == CodeConstants.TYPE_OBJECT && !val.equals(VARTYPE_OBJECT);
+        }
     }
 
     return res;
@@ -270,11 +265,11 @@ public class VarType { // TODO: optimize switch
       return true;
     }
 
-    if (o == null || !(o instanceof VarType)) {
+    if (!(o instanceof VarType)) {
       return false;
     }
 
-    VarType vt = (VarType) o;
+    VarType vt = (VarType)o;
     return type == vt.type && arrayDim == vt.arrayDim && InterpreterUtil.equalObjects(value, vt.value);
   }
 
@@ -286,7 +281,8 @@ public class VarType { // TODO: optimize switch
     }
     if (type == CodeConstants.TYPE_OBJECT) {
       res.append('L').append(value).append(';');
-    } else {
+    }
+    else {
       res.append(value);
     }
     return res.toString();
@@ -300,19 +296,22 @@ public class VarType { // TODO: optimize switch
 
     if (type1.isSuperset(type2)) {
       return type2;
-    } else if (type2.isSuperset(type1)) {
+    }
+    else if (type2.isSuperset(type1)) {
       return type1;
-    } else if (type1.typeFamily == type2.typeFamily) {
+    }
+    else if (type1.typeFamily == type2.typeFamily) {
       switch (type1.typeFamily) {
-      case CodeConstants.TYPE_FAMILY_INTEGER:
-        if ((type1.type == CodeConstants.TYPE_CHAR && type2.type == CodeConstants.TYPE_SHORT)
-            || (type1.type == CodeConstants.TYPE_SHORT && type2.type == CodeConstants.TYPE_CHAR)) {
-          return VARTYPE_SHORTCHAR;
-        } else {
-          return VARTYPE_BYTECHAR;
-        }
-      case CodeConstants.TYPE_FAMILY_OBJECT:
-        return VARTYPE_NULL;
+        case CodeConstants.TYPE_FAMILY_INTEGER:
+          if ((type1.type == CodeConstants.TYPE_CHAR && type2.type == CodeConstants.TYPE_SHORT)
+              || (type1.type == CodeConstants.TYPE_SHORT && type2.type == CodeConstants.TYPE_CHAR)) {
+            return VARTYPE_SHORTCHAR;
+          }
+          else {
+            return VARTYPE_BYTECHAR;
+          }
+        case CodeConstants.TYPE_FAMILY_OBJECT:
+          return VARTYPE_NULL;
       }
     }
 
@@ -327,19 +326,22 @@ public class VarType { // TODO: optimize switch
 
     if (type1.isSuperset(type2)) {
       return type1;
-    } else if (type2.isSuperset(type1)) {
+    }
+    else if (type2.isSuperset(type1)) {
       return type2;
-    } else if (type1.typeFamily == type2.typeFamily) {
+    }
+    else if (type1.typeFamily == type2.typeFamily) {
       switch (type1.typeFamily) {
-      case CodeConstants.TYPE_FAMILY_INTEGER:
-        if ((type1.type == CodeConstants.TYPE_SHORTCHAR && type2.type == CodeConstants.TYPE_BYTE)
-            || (type1.type == CodeConstants.TYPE_BYTE && type2.type == CodeConstants.TYPE_SHORTCHAR)) {
-          return VARTYPE_SHORT;
-        } else {
-          return VARTYPE_INT;
-        }
-      case CodeConstants.TYPE_FAMILY_OBJECT:
-        return VARTYPE_OBJECT;
+        case CodeConstants.TYPE_FAMILY_INTEGER:
+          if ((type1.type == CodeConstants.TYPE_SHORTCHAR && type2.type == CodeConstants.TYPE_BYTE)
+              || (type1.type == CodeConstants.TYPE_BYTE && type2.type == CodeConstants.TYPE_SHORTCHAR)) {
+            return VARTYPE_SHORT;
+          }
+          else {
+            return VARTYPE_INT;
+          }
+        case CodeConstants.TYPE_FAMILY_OBJECT:
+          return VARTYPE_OBJECT;
       }
     }
 
@@ -348,59 +350,59 @@ public class VarType { // TODO: optimize switch
 
   public static VarType getMinTypeInFamily(int family) {
     switch (family) {
-    case CodeConstants.TYPE_FAMILY_BOOLEAN:
-      return VARTYPE_BOOLEAN;
-    case CodeConstants.TYPE_FAMILY_INTEGER:
-      return VARTYPE_BYTECHAR;
-    case CodeConstants.TYPE_FAMILY_OBJECT:
-      return VARTYPE_NULL;
-    case CodeConstants.TYPE_FAMILY_FLOAT:
-      return VARTYPE_FLOAT;
-    case CodeConstants.TYPE_FAMILY_LONG:
-      return VARTYPE_LONG;
-    case CodeConstants.TYPE_FAMILY_DOUBLE:
-      return VARTYPE_DOUBLE;
-    case CodeConstants.TYPE_FAMILY_UNKNOWN:
-      return VARTYPE_UNKNOWN;
-    default:
-      throw new IllegalArgumentException("Invalid type family: " + family);
+      case CodeConstants.TYPE_FAMILY_BOOLEAN:
+        return VARTYPE_BOOLEAN;
+      case CodeConstants.TYPE_FAMILY_INTEGER:
+        return VARTYPE_BYTECHAR;
+      case CodeConstants.TYPE_FAMILY_OBJECT:
+        return VARTYPE_NULL;
+      case CodeConstants.TYPE_FAMILY_FLOAT:
+        return VARTYPE_FLOAT;
+      case CodeConstants.TYPE_FAMILY_LONG:
+        return VARTYPE_LONG;
+      case CodeConstants.TYPE_FAMILY_DOUBLE:
+        return VARTYPE_DOUBLE;
+      case CodeConstants.TYPE_FAMILY_UNKNOWN:
+        return VARTYPE_UNKNOWN;
+      default:
+        throw new IllegalArgumentException("Invalid type family: " + family);
     }
   }
 
   public static int getType(char c) {
     switch (c) {
-    case 'B':
-      return CodeConstants.TYPE_BYTE;
-    case 'C':
-      return CodeConstants.TYPE_CHAR;
-    case 'D':
-      return CodeConstants.TYPE_DOUBLE;
-    case 'F':
-      return CodeConstants.TYPE_FLOAT;
-    case 'I':
-      return CodeConstants.TYPE_INT;
-    case 'J':
-      return CodeConstants.TYPE_LONG;
-    case 'S':
-      return CodeConstants.TYPE_SHORT;
-    case 'Z':
-      return CodeConstants.TYPE_BOOLEAN;
-    case 'V':
-      return CodeConstants.TYPE_VOID;
-    case 'G':
-      return CodeConstants.TYPE_GROUP2EMPTY;
-    case 'N':
-      return CodeConstants.TYPE_NOTINITIALIZED;
-    case 'A':
-      return CodeConstants.TYPE_ADDRESS;
-    case 'X':
-      return CodeConstants.TYPE_BYTECHAR;
-    case 'Y':
-      return CodeConstants.TYPE_SHORTCHAR;
-    case 'U':
-      return CodeConstants.TYPE_UNKNOWN;
-    default:
-      throw new IllegalArgumentException("Invalid type: " + c);
+      case 'B':
+        return CodeConstants.TYPE_BYTE;
+      case 'C':
+        return CodeConstants.TYPE_CHAR;
+      case 'D':
+        return CodeConstants.TYPE_DOUBLE;
+      case 'F':
+        return CodeConstants.TYPE_FLOAT;
+      case 'I':
+        return CodeConstants.TYPE_INT;
+      case 'J':
+        return CodeConstants.TYPE_LONG;
+      case 'S':
+        return CodeConstants.TYPE_SHORT;
+      case 'Z':
+        return CodeConstants.TYPE_BOOLEAN;
+      case 'V':
+        return CodeConstants.TYPE_VOID;
+      case 'G':
+        return CodeConstants.TYPE_GROUP2EMPTY;
+      case 'N':
+        return CodeConstants.TYPE_NOTINITIALIZED;
+      case 'A':
+        return CodeConstants.TYPE_ADDRESS;
+      case 'X':
+        return CodeConstants.TYPE_BYTECHAR;
+      case 'Y':
+        return CodeConstants.TYPE_SHORTCHAR;
+      case 'U':
+        return CodeConstants.TYPE_UNKNOWN;
+      default:
+        throw new IllegalArgumentException("Invalid type: " + c);
     }
   }
 }

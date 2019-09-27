@@ -1,50 +1,39 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.TextBuffer;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class AssignmentExprent extends Exprent {
 
   public static final int CONDITION_NONE = -1;
 
-  private static final String[] OPERATORS = { " += ", // FUNCTION_ADD
-      " -= ", // FUNCTION_SUB
-      " *= ", // FUNCTION_MUL
-      " /= ", // FUNCTION_DIV
-      " &= ", // FUNCTION_AND
-      " |= ", // FUNCTION_OR
-      " ^= ", // FUNCTION_XOR
-      " %= ", // FUNCTION_REM
-      " <<= ", // FUNCTION_SHL
-      " >>= ", // FUNCTION_SHR
-      " >>>= " // FUNCTION_USHR
+  private static final String[] OPERATORS = {
+    " += ",   // FUNCTION_ADD
+    " -= ",   // FUNCTION_SUB
+    " *= ",   // FUNCTION_MUL
+    " /= ",   // FUNCTION_DIV
+    " &= ",   // FUNCTION_AND
+    " |= ",   // FUNCTION_OR
+    " ^= ",   // FUNCTION_XOR
+    " %= ",   // FUNCTION_REM
+    " <<= ",  // FUNCTION_SHL
+    " >>= ",  // FUNCTION_SHR
+    " >>>= "  // FUNCTION_USHR
   };
 
   private Exprent left;
@@ -73,9 +62,11 @@ public class AssignmentExprent extends Exprent {
 
     if (typeLeft.typeFamily > typeRight.typeFamily) {
       result.addMinTypeExprent(right, VarType.getMinTypeInFamily(typeLeft.typeFamily));
-    } else if (typeLeft.typeFamily < typeRight.typeFamily) {
+    }
+    else if (typeLeft.typeFamily < typeRight.typeFamily) {
       result.addMinTypeExprent(left, typeRight);
-    } else {
+    }
+    else {
       result.addMinTypeExprent(left, VarType.getCommonSupertype(typeLeft, typeRight));
     }
 
@@ -107,16 +98,15 @@ public class AssignmentExprent extends Exprent {
 
     boolean fieldInClassInit = false, hiddenField = false;
     if (left.type == Exprent.EXPRENT_FIELD) { // first assignment to a final field. Field name without "this" in front of it
-      FieldExprent field = (FieldExprent) left;
-      ClassNode node = ((ClassNode) DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE));
+      FieldExprent field = (FieldExprent)left;
+      ClassNode node = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE));
       if (node != null) {
         StructField fd = node.classStruct.getField(field.getName(), field.getDescriptor().descriptorString);
         if (fd != null) {
           if (field.isStatic() && fd.hasModifier(CodeConstants.ACC_FINAL)) {
             fieldInClassInit = true;
           }
-          if (node.getWrapper() != null
-              && node.getWrapper().getHiddenMembers().contains(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()))) {
+          if (node.getWrapper() != null && node.getWrapper().getHiddenMembers().contains(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()))) {
             hiddenField = true;
           }
         }
@@ -130,15 +120,21 @@ public class AssignmentExprent extends Exprent {
     TextBuffer buffer = new TextBuffer();
 
     if (fieldInClassInit) {
-      buffer.append(((FieldExprent) left).getName());
-    } else {
+      buffer.append(((FieldExprent)left).getName());
+    }
+    else {
       buffer.append(left.toJava(indent, tracer));
+    }
+
+    if (right.type == EXPRENT_CONST) {
+      ((ConstExprent) right).adjustConstType(leftType);
     }
 
     TextBuffer res = right.toJava(indent, tracer);
 
-    if (condType == CONDITION_NONE && !leftType.isSuperset(rightType)
-        && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) {
+    if (condType == CONDITION_NONE &&
+        !leftType.isSuperset(rightType) &&
+        (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) {
       if (right.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
         res.enclose("(", ")");
       }
@@ -165,13 +161,13 @@ public class AssignmentExprent extends Exprent {
 
   @Override
   public boolean equals(Object o) {
-    if (o == this)
-      return true;
-    if (o == null || !(o instanceof AssignmentExprent))
-      return false;
+    if (o == this) return true;
+    if (!(o instanceof AssignmentExprent)) return false;
 
-    AssignmentExprent as = (AssignmentExprent) o;
-    return InterpreterUtil.equalObjects(left, as.getLeft()) && InterpreterUtil.equalObjects(right, as.getRight()) && condType == as.getCondType();
+    AssignmentExprent as = (AssignmentExprent)o;
+    return InterpreterUtil.equalObjects(left, as.getLeft()) &&
+           InterpreterUtil.equalObjects(right, as.getRight()) &&
+           condType == as.getCondType();
   }
 
   // *****************************************************************************
@@ -180,10 +176,6 @@ public class AssignmentExprent extends Exprent {
 
   public Exprent getLeft() {
     return left;
-  }
-
-  public void setLeft(Exprent left) {
-    this.left = left;
   }
 
   public Exprent getRight() {

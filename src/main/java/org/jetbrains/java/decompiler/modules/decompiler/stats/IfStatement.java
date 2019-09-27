@@ -1,24 +1,6 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -28,7 +10,12 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
 import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.TextUtil;
+
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class IfStatement extends Statement {
 
@@ -49,9 +36,7 @@ public class IfStatement extends Statement {
 
   private boolean negated = false;
 
-  private boolean iffflag;
-
-  private final List<Exprent> headexprent = new ArrayList<>(); // contains IfExprent
+  private final List<Exprent> headexprent = new ArrayList<>(1); // contains IfExprent
 
   // *****************************************************************************
   // constructors
@@ -73,59 +58,66 @@ public class IfStatement extends Statement {
     List<StatEdge> lstHeadSuccs = head.getSuccessorEdges(STATEDGE_DIRECT_ALL);
 
     switch (regedges) {
-    case 0:
-      ifstat = null;
-      elsestat = null;
+      case 0:
+        ifstat = null;
+        elsestat = null;
 
-      break;
-    case 1:
-      ifstat = null;
-      elsestat = null;
+        break;
+      case 1:
+        ifstat = null;
+        elsestat = null;
 
-      StatEdge edgeif = lstHeadSuccs.get(1);
-      if (edgeif.getType() != StatEdge.TYPE_REGULAR) {
-        post = lstHeadSuccs.get(0).getDestination();
-      } else {
-        post = edgeif.getDestination();
-        negated = true;
-      }
-      break;
-    case 2:
-      elsestat = lstHeadSuccs.get(0).getDestination();
-      ifstat = lstHeadSuccs.get(1).getDestination();
+        StatEdge edgeif = lstHeadSuccs.get(1);
+        if (edgeif.getType() != StatEdge.TYPE_REGULAR) {
+          post = lstHeadSuccs.get(0).getDestination();
+        }
+        else {
+          post = edgeif.getDestination();
+          negated = true;
+        }
+        break;
+      case 2:
+        elsestat = lstHeadSuccs.get(0).getDestination();
+        ifstat = lstHeadSuccs.get(1).getDestination();
 
-      List<StatEdge> lstSucc = ifstat.getSuccessorEdges(StatEdge.TYPE_REGULAR);
-      List<StatEdge> lstSucc1 = elsestat.getSuccessorEdges(StatEdge.TYPE_REGULAR);
+        List<StatEdge> lstSucc = ifstat.getSuccessorEdges(StatEdge.TYPE_REGULAR);
+        List<StatEdge> lstSucc1 = elsestat.getSuccessorEdges(StatEdge.TYPE_REGULAR);
 
-      if (ifstat.getPredecessorEdges(StatEdge.TYPE_REGULAR).size() > 1 || lstSucc.size() > 1) {
-        post = ifstat;
-      } else if (elsestat.getPredecessorEdges(StatEdge.TYPE_REGULAR).size() > 1 || lstSucc1.size() > 1) {
-        post = elsestat;
-      } else {
-        if (lstSucc.size() == 0) {
-          post = elsestat;
-        } else if (lstSucc1.size() == 0) {
+        if (ifstat.getPredecessorEdges(StatEdge.TYPE_REGULAR).size() > 1 || lstSucc.size() > 1) {
           post = ifstat;
         }
-      }
-
-      if (ifstat == post) {
-        if (elsestat != post) {
-          ifstat = elsestat;
-          negated = true;
-        } else {
-          ifstat = null;
+        else if (elsestat.getPredecessorEdges(StatEdge.TYPE_REGULAR).size() > 1 || lstSucc1.size() > 1) {
+          post = elsestat;
         }
-        elsestat = null;
-      } else if (elsestat == post) {
-        elsestat = null;
-      } else {
-        post = postst;
-      }
+        else {
+          if (lstSucc.size() == 0) {
+            post = elsestat;
+          }
+          else if (lstSucc1.size() == 0) {
+            post = ifstat;
+          }
+        }
 
-      if (elsestat == null) {
-        regedges = 1; // if without else
-      }
+        if (ifstat == post) {
+          if (elsestat != post) {
+            ifstat = elsestat;
+            negated = true;
+          }
+          else {
+            ifstat = null;
+          }
+          elsestat = null;
+        }
+        else if (elsestat == post) {
+          elsestat = null;
+        }
+        else {
+          post = postst;
+        }
+
+        if (elsestat == null) {
+          regedges = 1;  // if without else
+        }
     }
 
     ifedge = lstHeadSuccs.get(negated ? 0 : 1);
@@ -139,7 +131,8 @@ public class IfStatement extends Statement {
         head.removeSuccessor(edge);
         edge.setSource(this);
         this.addSuccessor(edge);
-      } else if (regedges == 1) {
+      }
+      else if (regedges == 1) {
         StatEdge edge = lstHeadSuccs.get(negated ? 1 : 0);
         head.removeSuccessor(edge);
       }
@@ -157,6 +150,7 @@ public class IfStatement extends Statement {
       post = this;
     }
   }
+
 
   // *****************************************************************************
   // public methods
@@ -193,8 +187,8 @@ public class IfStatement extends Statement {
     return null;
   }
 
+  @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
-    String indstr = TextUtil.getIndentString(indent);
     TextBuffer buf = new TextBuffer();
 
     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
@@ -209,41 +203,48 @@ public class IfStatement extends Statement {
     tracer.incrementCurrentSourceLine();
 
     if (ifstat == null) {
-      buf.appendIndent(indent + 1);
-
+      boolean semicolon = false;
       if (ifedge.explicit) {
+        semicolon = true;
         if (ifedge.getType() == StatEdge.TYPE_BREAK) {
           // break
-          buf.append("break");
-        } else {
+          buf.appendIndent(indent + 1).append("break");
+        }
+        else {
           // continue
-          buf.append("continue");
+          buf.appendIndent(indent + 1).append("continue");
         }
 
         if (ifedge.labeled) {
           buf.append(" label").append(ifedge.closure.id.toString());
         }
       }
-      buf.append(";").appendLineSeparator();
-      tracer.incrementCurrentSourceLine();
-    } else {
+      if(semicolon) {
+        buf.append(";").appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
+      }
+    }
+    else {
       buf.append(ExprProcessor.jmpWrapper(ifstat, indent + 1, true, tracer));
     }
 
     boolean elseif = false;
 
     if (elsestat != null) {
-      if (elsestat.type == Statement.TYPE_IF && elsestat.varDefinitions.isEmpty() && elsestat.getFirst().getExprents().isEmpty()
-          && !elsestat.isLabeled()
-          && (elsestat.getSuccessorEdges(STATEDGE_DIRECT_ALL).isEmpty() || !elsestat.getSuccessorEdges(STATEDGE_DIRECT_ALL).get(0).explicit)) { // else if
-        TextBuffer content = ExprProcessor.jmpWrapper(elsestat, indent, false, tracer);
-        content.setStart(indstr.length());
-
+      if (elsestat.type == Statement.TYPE_IF
+          && elsestat.varDefinitions.isEmpty() && elsestat.getFirst().getExprents().isEmpty() &&
+          !elsestat.isLabeled() &&
+          (elsestat.getSuccessorEdges(STATEDGE_DIRECT_ALL).isEmpty()
+           || !elsestat.getSuccessorEdges(STATEDGE_DIRECT_ALL).get(0).explicit)) { // else if
         buf.appendIndent(indent).append("} else ");
+
+        TextBuffer content = ExprProcessor.jmpWrapper(elsestat, indent, false, tracer);
+        content.setStart(TextUtil.getIndentString(indent).length());
         buf.append(content);
 
         elseif = true;
-      } else {
+      }
+      else {
         BytecodeMappingTracer else_tracer = new BytecodeMappingTracer(tracer.getCurrentSourceLine() + 1);
         TextBuffer content = ExprProcessor.jmpWrapper(elsestat, indent + 1, false, else_tracer);
 
@@ -266,18 +267,20 @@ public class IfStatement extends Statement {
     return buf;
   }
 
+  @Override
   public void initExprents() {
 
-    IfExprent ifexpr = (IfExprent) first.getExprents().remove(first.getExprents().size() - 1);
+    IfExprent ifexpr = (IfExprent)first.getExprents().remove(first.getExprents().size() - 1);
 
     if (negated) {
-      ifexpr = (IfExprent) ifexpr.copy();
+      ifexpr = (IfExprent)ifexpr.copy();
       ifexpr.negateIf();
     }
 
     headexprent.set(0, ifexpr);
   }
 
+  @Override
   public List<Object> getSequentialObjects() {
 
     List<Object> lst = new ArrayList<>(stats);
@@ -286,12 +289,14 @@ public class IfStatement extends Statement {
     return lst;
   }
 
+  @Override
   public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
     if (headexprent.get(0) == oldexpr) {
       headexprent.set(0, newexpr);
     }
   }
 
+  @Override
   public void replaceStatement(Statement oldstat, Statement newstat) {
 
     super.replaceStatement(oldstat, newstat);
@@ -309,29 +314,32 @@ public class IfStatement extends Statement {
     if (iftype == IFTYPE_IF) {
       ifedge = lstSuccs.get(0);
       elseedge = null;
-    } else {
+    }
+    else {
       StatEdge edge0 = lstSuccs.get(0);
       StatEdge edge1 = lstSuccs.get(1);
       if (edge0.getDestination() == ifstat) {
         ifedge = edge0;
         elseedge = edge1;
-      } else {
+      }
+      else {
         ifedge = edge1;
         elseedge = edge0;
       }
     }
   }
 
+  @Override
   public Statement getSimpleCopy() {
 
     IfStatement is = new IfStatement();
     is.iftype = this.iftype;
     is.negated = this.negated;
-    is.iffflag = this.iffflag;
 
     return is;
   }
 
+  @Override
   public void initSimpleCopy() {
 
     first = stats.get(0);
@@ -381,15 +389,7 @@ public class IfStatement extends Statement {
   }
 
   public IfExprent getHeadexprent() {
-    return (IfExprent) headexprent.get(0);
-  }
-
-  public boolean isIffflag() {
-    return iffflag;
-  }
-
-  public void setIffflag(boolean iffflag) {
-    this.iffflag = iffflag;
+    return (IfExprent)headexprent.get(0);
   }
 
   public void setElseEdge(StatEdge elseedge) {
@@ -412,15 +412,15 @@ public class IfStatement extends Statement {
   // IMatchable implementation
   // *****************************************************************************
 
+  @Override
   public IMatchable findObject(MatchNode matchNode, int index) {
-
     IMatchable object = super.findObject(matchNode, index);
     if (object != null) {
       return object;
     }
 
     if (matchNode.getType() == MatchNode.MATCHNODE_EXPRENT) {
-      String position = (String) matchNode.getRuleValue(MatchProperties.EXPRENT_POSITION);
+      String position = (String)matchNode.getRuleValue(MatchProperties.EXPRENT_POSITION);
       if ("head".equals(position)) {
         return getHeadexprent();
       }
@@ -429,20 +429,13 @@ public class IfStatement extends Statement {
     return null;
   }
 
+  @Override
   public boolean match(MatchNode matchNode, MatchEngine engine) {
-
     if (!super.match(matchNode, engine)) {
       return false;
     }
 
-    Integer type = (Integer) matchNode.getRuleValue(MatchProperties.STATEMENT_IFTYPE);
-    if (type != null) {
-      if (this.iftype != type.intValue()) {
-        return false;
-      }
-    }
-
-    return true;
+    Integer type = (Integer)matchNode.getRuleValue(MatchProperties.STATEMENT_IFTYPE);
+    return type == null || this.iftype == type;
   }
-
 }

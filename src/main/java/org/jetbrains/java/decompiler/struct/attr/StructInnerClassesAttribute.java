@@ -1,31 +1,16 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.attr;
 
-import java.io.DataInputStream;
+import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.util.DataInputFullStream;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
-
 public class StructInnerClassesAttribute extends StructGeneralAttribute {
   public static class Entry {
-    public final int innerNameIdx;
     public final int outerNameIdx;
     public final int simpleNameIdx;
     public final int accessFlags;
@@ -33,8 +18,7 @@ public class StructInnerClassesAttribute extends StructGeneralAttribute {
     public final String enclosingName;
     public final String simpleName;
 
-    private Entry(int innerNameIdx, int outerNameIdx, int simpleNameIdx, int accessFlags, String innerName, String enclosingName, String simpleName) {
-      this.innerNameIdx = innerNameIdx;
+    private Entry(int outerNameIdx, int simpleNameIdx, int accessFlags, String innerName, String enclosingName, String simpleName) {
       this.outerNameIdx = outerNameIdx;
       this.simpleNameIdx = simpleNameIdx;
       this.accessFlags = accessFlags;
@@ -47,9 +31,7 @@ public class StructInnerClassesAttribute extends StructGeneralAttribute {
   private List<Entry> entries;
 
   @Override
-  public void initContent(ConstantPool pool) throws IOException {
-    DataInputStream data = stream();
-
+  public void initContent(DataInputFullStream data, ConstantPool pool) throws IOException {
     int len = data.readUnsignedShort();
     if (len > 0) {
       entries = new ArrayList<>(len);
@@ -64,9 +46,10 @@ public class StructInnerClassesAttribute extends StructGeneralAttribute {
         String outerName = outerNameIdx != 0 ? pool.getPrimitiveConstant(outerNameIdx).getString() : null;
         String simpleName = simpleNameIdx != 0 ? pool.getPrimitiveConstant(simpleNameIdx).getString() : null;
 
-        entries.add(new Entry(innerNameIdx, outerNameIdx, simpleNameIdx, accessFlags, innerName, outerName, simpleName));
+        entries.add(new Entry(outerNameIdx, simpleNameIdx, accessFlags, innerName, outerName, simpleName));
       }
-    } else {
+    }
+    else {
       entries = Collections.emptyList();
     }
   }

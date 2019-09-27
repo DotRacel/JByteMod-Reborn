@@ -1,21 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * 
- * Modified by GraxCode / noverify
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct;
+
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.extern.IResultSaver;
+import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
+import org.jetbrains.java.decompiler.util.DataInputFullStream;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,24 +16,19 @@ import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.extern.IResultSaver;
-import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
-import org.jetbrains.java.decompiler.util.DataInputFullStream;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
-
 public class StructContext {
 
-  private final IResultSaver saver;
-  private final IDecompiledData decompiledData;
-  private final LazyLoader loader;
-  private final Map<String, ContextUnit> units = new HashMap<>();
+  public final IResultSaver saver;
+  public final IDecompiledData decompiledData;
+  public final LazyLoader loader;
+  public final Map<String, ContextUnit> units = new HashMap<>();
   private final Map<String, StructClass> classes = new HashMap<>();
 
   public StructContext(IResultSaver saver, IDecompiledData decompiledData, LazyLoader loader) {
     this.saver = saver;
     this.decompiledData = decompiledData;
     this.loader = loader;
+
     ContextUnit defaultUnit = new ContextUnit(ContextUnit.TYPE_FOLDER, null, "", true, saver, decompiledData);
     units.put("", defaultUnit);
   }
@@ -81,10 +66,8 @@ public class StructContext {
 
   private void addSpace(String path, File file, boolean isOwn, int level) {
     if (file.isDirectory()) {
-      if (level == 1)
-        path += file.getName();
-      else if (level > 1)
-        path += "/" + file.getName();
+      if (level == 1) path += file.getName();
+      else if (level > 1) path += "/" + file.getName();
 
       File[] files = file.listFiles();
       if (files != null) {
@@ -92,7 +75,8 @@ public class StructContext {
           addSpace(path, files[i], isOwn, level + 1);
         }
       }
-    } else {
+    }
+    else {
       String filename = file.getName();
 
       boolean isArchive = false;
@@ -100,11 +84,13 @@ public class StructContext {
         if (filename.endsWith(".jar")) {
           isArchive = true;
           addArchive(path, file, ContextUnit.TYPE_JAR, isOwn);
-        } else if (filename.endsWith(".zip")) {
+        }
+        else if (filename.endsWith(".zip")) {
           isArchive = true;
           addArchive(path, file, ContextUnit.TYPE_ZIP, isOwn);
         }
-      } catch (IOException ex) {
+      }
+      catch (IOException ex) {
         String message = "Corrupted archive file: " + file;
         DecompilerContext.getLogger().writeMessage(message, ex);
       }
@@ -123,19 +109,20 @@ public class StructContext {
           StructClass cl = new StructClass(in, isOwn, loader);
           classes.put(cl.qualifiedName, cl);
           unit.addClass(cl, filename);
-          loader.addClassLink(cl.qualifiedName, new LazyLoader.Link(LazyLoader.Link.CLASS, file.getAbsolutePath(), null));
-        } catch (IOException ex) {
+          loader.addClassLink(cl.qualifiedName, new LazyLoader.Link(file.getAbsolutePath(), null));
+        }
+        catch (IOException ex) {
           String message = "Corrupted class file: " + file;
           DecompilerContext.getLogger().writeMessage(message, ex);
         }
-      } else {
+      }
+      else {
         unit.addOtherEntry(file.getAbsolutePath(), filename);
       }
     }
   }
 
   private void addArchive(String path, File file, int type, boolean isOwn) throws IOException {
-    //noinspection IOResourceOpenedButNotSafelyClosed
     try (ZipFile archive = type == ContextUnit.TYPE_JAR ? new JarFile(file) : new ZipFile(file)) {
       Enumeration<? extends ZipEntry> entries = archive.entries();
       while (entries.hasMoreElements()) {
@@ -145,7 +132,7 @@ public class StructContext {
         if (unit == null) {
           unit = new ContextUnit(type, path, file.getName(), isOwn, saver, decompiledData);
           if (type == ContextUnit.TYPE_JAR) {
-            unit.setManifest(((JarFile) archive).getManifest());
+            unit.setManifest(((JarFile)archive).getManifest());
           }
           units.put(path + "/" + file.getName(), unit);
         }
@@ -157,11 +144,13 @@ public class StructContext {
             StructClass cl = new StructClass(bytes, isOwn, loader);
             classes.put(cl.qualifiedName, cl);
             unit.addClass(cl, name);
-            loader.addClassLink(cl.qualifiedName, new LazyLoader.Link(LazyLoader.Link.ENTRY, file.getAbsolutePath(), name));
-          } else {
+            loader.addClassLink(cl.qualifiedName, new LazyLoader.Link(file.getAbsolutePath(), name));
+          }
+          else {
             unit.addOtherEntry(file.getAbsolutePath(), name);
           }
-        } else {
+        }
+        else {
           unit.addDirEntry(name);
         }
       }
@@ -171,21 +160,4 @@ public class StructContext {
   public Map<String, StructClass> getClasses() {
     return classes;
   }
-
-  public LazyLoader getLoader() {
-    return loader;
-  }
-
-  public Map<String, ContextUnit> getUnits() {
-    return units;
-  }
-
-  public IResultSaver getSaver() {
-    return saver;
-  }
-
-  public IDecompiledData getDecompiledData() {
-    return decompiledData;
-  }
-
 }

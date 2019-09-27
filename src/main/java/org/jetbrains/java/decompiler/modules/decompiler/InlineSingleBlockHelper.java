@@ -1,30 +1,14 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
+
+import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.SwitchStatement;
 
 public class InlineSingleBlockHelper {
+
 
   public static boolean inlineSingleBlocks(RootStatement root) {
 
@@ -47,7 +31,7 @@ public class InlineSingleBlockHelper {
 
     if (stat.type == Statement.TYPE_SEQUENCE) {
 
-      SequenceStatement seq = (SequenceStatement) stat;
+      SequenceStatement seq = (SequenceStatement)stat;
       for (int i = 1; i < seq.getStats().size(); i++) {
         if (isInlineable(seq, i)) {
           inlineBlock(seq, i);
@@ -63,7 +47,7 @@ public class InlineSingleBlockHelper {
 
     Statement first = seq.getStats().get(index);
     Statement pre = seq.getStats().get(index - 1);
-    pre.removeSuccessor(pre.getAllSuccessorEdges().get(0)); // single regular edge
+    pre.removeSuccessor(pre.getAllSuccessorEdges().get(0));   // single regular edge
 
     StatEdge edge = first.getPredecessorEdges(StatEdge.TYPE_BREAK).get(0);
     Statement source = edge.getSource();
@@ -75,8 +59,9 @@ public class InlineSingleBlockHelper {
       lst.add(0, seq.getStats().remove(i));
     }
 
-    if (parent.type == Statement.TYPE_IF && ((IfStatement) parent).iftype == IfStatement.IFTYPE_IF && source == parent.getFirst()) {
-      IfStatement ifparent = (IfStatement) parent;
+    if (parent.type == Statement.TYPE_IF && ((IfStatement)parent).iftype == IfStatement.IFTYPE_IF &&
+        source == parent.getFirst()) {
+      IfStatement ifparent = (IfStatement)parent;
       SequenceStatement block = new SequenceStatement(lst);
       block.setAllParent();
 
@@ -87,7 +72,8 @@ public class InlineSingleBlockHelper {
 
       ifparent.getStats().addWithKey(block, block.id);
       block.setParent(ifparent);
-    } else {
+    }
+    else {
       lst.add(0, source);
 
       SequenceStatement block = new SequenceStatement(lst);
@@ -107,8 +93,9 @@ public class InlineSingleBlockHelper {
         source.addLabeledEdge(prededge);
       }
 
+
       if (parent.type == Statement.TYPE_SWITCH) {
-        ((SwitchStatement) parent).sortEdgesAndNodes();
+        ((SwitchStatement)parent).sortEdgesAndNodes();
       }
 
       source.addSuccessor(new StatEdge(StatEdge.TYPE_REGULAR, source, first));
@@ -124,22 +111,21 @@ public class InlineSingleBlockHelper {
       return false;
     }
 
+
     List<StatEdge> lst = first.getPredecessorEdges(StatEdge.TYPE_BREAK);
 
     if (lst.size() == 1) {
       StatEdge edge = lst.get(0);
 
       if (sameCatchRanges(edge)) {
-        if (edge.explicit) {
-          return true;
-        } else {
+        if (!edge.explicit) {
           for (int i = index; i < seq.getStats().size(); i++) {
             if (!noExitLabels(seq.getStats().get(i), seq)) {
               return false;
             }
           }
-          return true;
         }
+        return true;
       }
       // FIXME: count labels properly
     }
@@ -159,11 +145,13 @@ public class InlineSingleBlockHelper {
         break;
       }
 
-      if (parent.type == Statement.TYPE_TRYCATCH || parent.type == Statement.TYPE_CATCHALL) {
+      if (parent.type == Statement.TYPE_TRYCATCH ||
+          parent.type == Statement.TYPE_CATCHALL) {
         if (parent.getFirst() == from) {
           return false;
         }
-      } else if (parent.type == Statement.TYPE_SYNCRONIZED) {
+      }
+      else if (parent.type == Statement.TYPE_SYNCRONIZED) {
         if (parent.getStats().get(1) == from) {
           return false;
         }
@@ -195,17 +183,12 @@ public class InlineSingleBlockHelper {
   }
 
   public static boolean isBreakEdgeLabeled(Statement source, Statement closure) {
-
     if (closure.type == Statement.TYPE_DO || closure.type == Statement.TYPE_SWITCH) {
-
       Statement parent = source.getParent();
-
-      if (parent == closure) {
-        return false;
-      } else {
-        return parent.type == Statement.TYPE_DO || parent.type == Statement.TYPE_SWITCH || isBreakEdgeLabeled(parent, closure);
-      }
-    } else {
+      return parent != closure &&
+             (parent.type == Statement.TYPE_DO || parent.type == Statement.TYPE_SWITCH || isBreakEdgeLabeled(parent, closure));
+    }
+    else {
       return true;
     }
   }

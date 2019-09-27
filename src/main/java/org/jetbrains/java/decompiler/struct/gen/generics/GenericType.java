@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.gen.generics;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class GenericType {
 
@@ -42,56 +28,65 @@ public class GenericType {
     this.value = value;
   }
 
+  private GenericType(GenericType other, int arrayDim) {
+    this(other.type, arrayDim, other.value);
+    enclosingClasses.addAll(other.enclosingClasses);
+    arguments.addAll(other.arguments);
+    wildcards.addAll(other.wildcards);
+  }
+
   public GenericType(String signature) {
     int type = 0;
     int arrayDim = 0;
     String value = null;
 
     int index = 0;
-    loop: while (index < signature.length()) {
+    loop:
+    while (index < signature.length()) {
       switch (signature.charAt(index)) {
-      case '[':
-        arrayDim++;
-        break;
+        case '[':
+          arrayDim++;
+          break;
 
-      case 'T':
-        type = CodeConstants.TYPE_GENVAR;
-        value = signature.substring(index + 1, signature.length() - 1);
-        break loop;
+        case 'T':
+          type = CodeConstants.TYPE_GENVAR;
+          value = signature.substring(index + 1, signature.length() - 1);
+          break loop;
 
-      case 'L':
-        type = CodeConstants.TYPE_OBJECT;
-        signature = signature.substring(index + 1, signature.length() - 1);
+        case 'L':
+          type = CodeConstants.TYPE_OBJECT;
+          signature = signature.substring(index + 1, signature.length() - 1);
 
-        while (true) {
-          String cl = getNextClassSignature(signature);
+          while (true) {
+            String cl = getNextClassSignature(signature);
 
-          String name = cl;
-          String args = null;
+            String name = cl;
+            String args = null;
 
-          int argStart = cl.indexOf("<");
-          if (argStart >= 0) {
-            name = cl.substring(0, argStart);
-            args = cl.substring(argStart + 1, cl.length() - 1);
+            int argStart = cl.indexOf("<");
+            if (argStart >= 0) {
+              name = cl.substring(0, argStart);
+              args = cl.substring(argStart + 1, cl.length() - 1);
+            }
+
+            if (cl.length() < signature.length()) {
+              signature = signature.substring(cl.length() + 1); // skip '.'
+              GenericType type11 = new GenericType(CodeConstants.TYPE_OBJECT, 0, name);
+              parseArgumentsList(args, type11);
+              enclosingClasses.add(type11);
+            }
+            else {
+              value = name;
+              parseArgumentsList(args, this);
+              break;
+            }
           }
 
-          if (cl.length() < signature.length()) {
-            signature = signature.substring(cl.length() + 1); // skip '.'
-            GenericType type11 = new GenericType(CodeConstants.TYPE_OBJECT, 0, name);
-            parseArgumentsList(args, type11);
-            enclosingClasses.add(type11);
-          } else {
-            value = name;
-            parseArgumentsList(args, this);
-            break;
-          }
-        }
+          break loop;
 
-        break loop;
-
-      default:
-        value = signature.substring(index, index + 1);
-        type = VarType.getType(value.charAt(0));
+        default:
+          value = signature.substring(index, index + 1);
+          type = VarType.getType(value.charAt(0));
       }
 
       index++;
@@ -106,18 +101,19 @@ public class GenericType {
     int counter = 0;
     int index = 0;
 
-    loop: while (index < value.length()) {
+    loop:
+    while (index < value.length()) {
       switch (value.charAt(index)) {
-      case '<':
-        counter++;
-        break;
-      case '>':
-        counter--;
-        break;
-      case '.':
-        if (counter == 0) {
-          break loop;
-        }
+        case '<':
+          counter++;
+          break;
+        case '>':
+          counter--;
+          break;
+        case '.':
+          if (counter == 0) {
+            break loop;
+          }
       }
 
       index++;
@@ -137,15 +133,15 @@ public class GenericType {
       int wildcard = WILDCARD_NO;
 
       switch (typeStr.charAt(0)) {
-      case '*':
-        wildcard = WILDCARD_UNBOUND;
-        break;
-      case '+':
-        wildcard = WILDCARD_EXTENDS;
-        break;
-      case '-':
-        wildcard = WILDCARD_SUPER;
-        break;
+        case '*':
+          wildcard = WILDCARD_UNBOUND;
+          break;
+        case '+':
+          wildcard = WILDCARD_EXTENDS;
+          break;
+        case '-':
+          wildcard = WILDCARD_SUPER;
+          break;
       }
 
       type.getWildcards().add(wildcard);
@@ -166,37 +162,38 @@ public class GenericType {
 
     boolean contMode = false;
 
-    loop: while (index < value.length()) {
+    loop:
+    while (index < value.length()) {
       switch (value.charAt(index)) {
-      case '*':
-        if (!contMode) {
-          break loop;
-        }
-        break;
-      case 'L':
-      case 'T':
-        if (!contMode) {
-          contMode = true;
-        }
-      case '[':
-      case '+':
-      case '-':
-        break;
-      default:
-        if (!contMode) {
-          break loop;
-        }
-        break;
-      case '<':
-        counter++;
-        break;
-      case '>':
-        counter--;
-        break;
-      case ';':
-        if (counter == 0) {
-          break loop;
-        }
+        case '*':
+          if (!contMode) {
+            break loop;
+          }
+          break;
+        case 'L':
+        case 'T':
+          if (!contMode) {
+            contMode = true;
+          }
+        case '[':
+        case '+':
+        case '-':
+          break;
+        default:
+          if (!contMode) {
+            break loop;
+          }
+          break;
+        case '<':
+          counter++;
+          break;
+        case '>':
+          counter--;
+          break;
+        case ';':
+          if (counter == 0) {
+            break loop;
+          }
       }
 
       index++;
@@ -207,7 +204,7 @@ public class GenericType {
 
   public GenericType decreaseArrayDim() {
     assert arrayDim > 0 : this;
-    return new GenericType(type, arrayDim - 1, value);
+    return new GenericType(this, arrayDim - 1);
   }
 
   public List<GenericType> getArguments() {

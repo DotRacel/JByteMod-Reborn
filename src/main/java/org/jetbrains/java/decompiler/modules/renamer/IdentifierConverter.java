@@ -1,32 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.renamer;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.jetbrains.java.decompiler.code.CodeConstants;
-import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.IIdentifierRenamer;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
@@ -37,44 +12,32 @@ import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.NewClassNameBuilder;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
-public class IdentifierConverter implements NewClassNameBuilder {
+import java.io.IOException;
+import java.util.*;
 
-  private StructContext context;
-  private IIdentifierRenamer helper;
-  private PoolInterceptor interceptor;
+public class IdentifierConverter implements NewClassNameBuilder {
+  private final StructContext context;
+  private final IIdentifierRenamer helper;
+  private final PoolInterceptor interceptor;
   private List<ClassWrapperNode> rootClasses = new ArrayList<>();
   private List<ClassWrapperNode> rootInterfaces = new ArrayList<>();
   private Map<String, Map<String, String>> interfaceNameMaps = new HashMap<>();
 
-  public void rename(StructContext context) {
+  public IdentifierConverter(StructContext context, IIdentifierRenamer helper, PoolInterceptor interceptor) {
+    this.context = context;
+    this.helper = helper;
+    this.interceptor = interceptor;
+  }
+
+  public void rename() {
     try {
-      this.context = context;
-
-      String user_class = (String) DecompilerContext.getProperty(IFernflowerPreferences.USER_RENAMER_CLASS);
-      if (user_class != null) {
-        try {
-          helper = (IIdentifierRenamer) IdentifierConverter.class.getClassLoader().loadClass(user_class).newInstance();
-        } catch (Exception ignored) {
-        }
-      }
-
-      if (helper == null) {
-        helper = new ConverterHelper();
-      }
-
-      interceptor = new PoolInterceptor(helper);
-
       buildInheritanceTree();
-
       renameAllClasses();
-
       renameInterfaces();
-
       renameClasses();
-
-      DecompilerContext.setPoolInterceptor(interceptor);
       context.reloadContext();
-    } catch (IOException ex) {
+    }
+    catch (IOException ex) {
       throw new RuntimeException("Renaming failed!");
     }
   }
@@ -100,7 +63,8 @@ public class IdentifierConverter implements NewClassNameBuilder {
         Map<String, String> mapInt = interfaceNameMaps.get(ifName);
         if (mapInt != null) {
           names.putAll(mapInt);
-        } else {
+        }
+        else {
           StructClass clintr = context.getClass(ifName);
           if (clintr != null) {
             names.putAll(processExternalInterface(clintr));
@@ -123,7 +87,8 @@ public class IdentifierConverter implements NewClassNameBuilder {
       Map<String, String> mapInt = interfaceNameMaps.get(ifName);
       if (mapInt != null) {
         names.putAll(mapInt);
-      } else {
+      }
+      else {
         StructClass clintr = context.getClass(ifName);
         if (clintr != null) {
           names.putAll(processExternalInterface(clintr));
@@ -189,7 +154,8 @@ public class IdentifierConverter implements NewClassNameBuilder {
       do {
         String classname = helper.getNextClassName(classOldFullName, ConverterHelper.getSimpleClassName(classOldFullName));
         classNewFullName = ConverterHelper.replaceSimpleClassName(classOldFullName, classname);
-      } while (context.getClasses().containsKey(classNewFullName));
+      }
+      while (context.getClasses().containsKey(classNewFullName));
 
       interceptor.addName(classOldFullName, classNewFullName);
     }
@@ -224,21 +190,24 @@ public class IdentifierConverter implements NewClassNameBuilder {
         if (!isPrivate) {
           names.put(key, name);
         }
-      } else if (helper.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_METHOD, classOldFullName, name, mt.getDescriptor())) {
+      }
+      else if (helper.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_METHOD, classOldFullName, name, mt.getDescriptor())) {
         if (isPrivate || !names.containsKey(key)) {
           do {
             name = helper.getNextMethodName(classOldFullName, name, mt.getDescriptor());
-          } while (setMethodNames.contains(name));
+          }
+          while (setMethodNames.contains(name));
 
           if (!isPrivate) {
             names.put(key, name);
           }
-        } else {
+        }
+        else {
           name = names.get(key);
         }
 
         interceptor.addName(classOldFullName + " " + mt.getName() + " " + mt.getDescriptor(),
-            classNewFullName + " " + name + " " + buildNewDescriptor(false, mt.getDescriptor()));
+                            classNewFullName + " " + name + " " + buildNewDescriptor(false, mt.getDescriptor()));
       }
     }
 
@@ -259,10 +228,11 @@ public class IdentifierConverter implements NewClassNameBuilder {
         String newName;
         do {
           newName = helper.getNextFieldName(classOldFullName, fd.getName(), fd.getDescriptor());
-        } while (setFieldNames.contains(newName));
+        }
+        while (setFieldNames.contains(newName));
 
         interceptor.addName(classOldFullName + " " + fd.getName() + " " + fd.getDescriptor(),
-            classNewFullName + " " + newName + " " + buildNewDescriptor(true, fd.getDescriptor()));
+                            classNewFullName + " " + newName + " " + buildNewDescriptor(true, fd.getDescriptor()));
       }
     }
   }
@@ -276,7 +246,8 @@ public class IdentifierConverter implements NewClassNameBuilder {
     String newDescriptor;
     if (isField) {
       newDescriptor = FieldDescriptor.parseDescriptor(descriptor).buildNewDescriptor(this);
-    } else {
+    }
+    else {
       newDescriptor = MethodDescriptor.parseDescriptor(descriptor).buildNewDescriptor(this);
     }
     return newDescriptor != null ? newDescriptor : descriptor;
@@ -351,14 +322,14 @@ public class IdentifierConverter implements NewClassNameBuilder {
           nodes.put(clStr.qualifiedName, node = new ClassWrapperNode(clStr));
         }
 
-        //noinspection ConstantConditions
         if (child != null) {
           node.addSubclass(child);
         }
 
         if (!isNewNode) {
           break;
-        } else {
+        }
+        else {
           boolean isInterface = clStr.hasModifier(CodeConstants.ACC_INTERFACE);
           boolean found_parent = false;
 
@@ -371,7 +342,8 @@ public class IdentifierConverter implements NewClassNameBuilder {
                 found_parent = true;
               }
             }
-          } else if (clStr.superClass != null) { // null iff java/lang/Object
+          }
+          else if (clStr.superClass != null) { // null iff java/lang/Object
             StructClass clParent = classes.get(clStr.superClass.getString());
             if (clParent != null) {
               stack.add(clParent);

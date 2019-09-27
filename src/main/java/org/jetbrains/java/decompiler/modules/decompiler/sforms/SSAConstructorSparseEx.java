@@ -1,25 +1,5 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.sforms;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map.Entry;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
@@ -38,6 +18,11 @@ import org.jetbrains.java.decompiler.util.FastSparseSetFactory;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map.Entry;
 
 public class SSAConstructorSparseEx {
 
@@ -58,8 +43,6 @@ public class SSAConstructorSparseEx {
 
   // var, version
   private final HashMap<Integer, Integer> lastversion = new HashMap<>();
-
-  private final List<VarVersionPair> startVars = new ArrayList<>();
 
   // set factory
   private FastSparseSetFactory<Integer> factory;
@@ -89,7 +72,8 @@ public class SSAConstructorSparseEx {
       // System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
       ssaStatements(dgraph, updated);
       // System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
-    } while (!updated.isEmpty());
+    }
+    while (!updated.isEmpty());
   }
 
   private void ssaStatements(DirectGraph dgraph, HashSet<String> updated) {
@@ -116,7 +100,7 @@ public class SSAConstructorSparseEx {
       SFormsFastMapDirect varmap = inVarVersions.get(node.id);
       varmap = new SFormsFastMapDirect(varmap);
 
-      SFormsFastMapDirect[] varmaparr = new SFormsFastMapDirect[] { varmap, null };
+      SFormsFastMapDirect[] varmaparr = new SFormsFastMapDirect[]{varmap, null};
 
       if (node.exprents != null) {
         for (Exprent expr : node.exprents) {
@@ -129,7 +113,7 @@ public class SSAConstructorSparseEx {
       }
 
       boolean this_updated = !mapsEqual(varmaparr[0], outVarVersions.get(node.id))
-          || (outNegVarVersions.containsKey(node.id) && !mapsEqual(varmaparr[1], outNegVarVersions.get(node.id)));
+                             || (outNegVarVersions.containsKey(node.id) && !mapsEqual(varmaparr[1], outNegVarVersions.get(node.id)));
 
       if (this_updated) {
         outVarVersions.put(node.id, varmaparr[0]);
@@ -154,67 +138,69 @@ public class SSAConstructorSparseEx {
     boolean finished = false;
 
     switch (expr.type) {
-    case Exprent.EXPRENT_ASSIGNMENT:
-      AssignmentExprent assexpr = (AssignmentExprent) expr;
-      if (assexpr.getCondType() == AssignmentExprent.CONDITION_NONE) {
-        Exprent dest = assexpr.getLeft();
-        if (dest.type == Exprent.EXPRENT_VAR) {
-          varassign = (VarExprent) dest;
+      case Exprent.EXPRENT_ASSIGNMENT:
+        AssignmentExprent assexpr = (AssignmentExprent)expr;
+        if (assexpr.getCondType() == AssignmentExprent.CONDITION_NONE) {
+          Exprent dest = assexpr.getLeft();
+          if (dest.type == Exprent.EXPRENT_VAR) {
+            varassign = (VarExprent)dest;
+          }
         }
-      }
-      break;
-    case Exprent.EXPRENT_FUNCTION:
-      FunctionExprent func = (FunctionExprent) expr;
-      switch (func.getFuncType()) {
-      case FunctionExprent.FUNCTION_IIF:
-        processExprent(func.getLstOperands().get(0), varmaparr);
+        break;
+      case Exprent.EXPRENT_FUNCTION:
+        FunctionExprent func = (FunctionExprent)expr;
+        switch (func.getFuncType()) {
+          case FunctionExprent.FUNCTION_IIF:
+            processExprent(func.getLstOperands().get(0), varmaparr);
 
-        SFormsFastMapDirect varmapFalse;
-        if (varmaparr[1] == null) {
-          varmapFalse = new SFormsFastMapDirect(varmaparr[0]);
-        } else {
-          varmapFalse = varmaparr[1];
-          varmaparr[1] = null;
+            SFormsFastMapDirect varmapFalse;
+            if (varmaparr[1] == null) {
+              varmapFalse = new SFormsFastMapDirect(varmaparr[0]);
+            }
+            else {
+              varmapFalse = varmaparr[1];
+              varmaparr[1] = null;
+            }
+
+            processExprent(func.getLstOperands().get(1), varmaparr);
+
+            SFormsFastMapDirect[] varmaparrNeg = new SFormsFastMapDirect[]{varmapFalse, null};
+            processExprent(func.getLstOperands().get(2), varmaparrNeg);
+
+            mergeMaps(varmaparr[0], varmaparrNeg[0]);
+            varmaparr[1] = null;
+
+            finished = true;
+            break;
+          case FunctionExprent.FUNCTION_CADD:
+            processExprent(func.getLstOperands().get(0), varmaparr);
+
+            SFormsFastMapDirect[] varmaparrAnd = new SFormsFastMapDirect[]{new SFormsFastMapDirect(varmaparr[0]), null};
+
+            processExprent(func.getLstOperands().get(1), varmaparrAnd);
+
+            // false map
+            varmaparr[1] = mergeMaps(varmaparr[varmaparr[1] == null ? 0 : 1], varmaparrAnd[varmaparrAnd[1] == null ? 0 : 1]);
+            // true map
+            varmaparr[0] = varmaparrAnd[0];
+
+            finished = true;
+            break;
+          case FunctionExprent.FUNCTION_COR:
+            processExprent(func.getLstOperands().get(0), varmaparr);
+
+            SFormsFastMapDirect[] varmaparrOr =
+              new SFormsFastMapDirect[]{new SFormsFastMapDirect(varmaparr[varmaparr[1] == null ? 0 : 1]), null};
+
+            processExprent(func.getLstOperands().get(1), varmaparrOr);
+
+            // false map
+            varmaparr[1] = varmaparrOr[varmaparrOr[1] == null ? 0 : 1];
+            // true map
+            varmaparr[0] = mergeMaps(varmaparr[0], varmaparrOr[0]);
+
+            finished = true;
         }
-
-        processExprent(func.getLstOperands().get(1), varmaparr);
-
-        SFormsFastMapDirect[] varmaparrNeg = new SFormsFastMapDirect[] { varmapFalse, null };
-        processExprent(func.getLstOperands().get(2), varmaparrNeg);
-
-        mergeMaps(varmaparr[0], varmaparrNeg[0]);
-        varmaparr[1] = null;
-
-        finished = true;
-        break;
-      case FunctionExprent.FUNCTION_CADD:
-        processExprent(func.getLstOperands().get(0), varmaparr);
-
-        SFormsFastMapDirect[] varmaparrAnd = new SFormsFastMapDirect[] { new SFormsFastMapDirect(varmaparr[0]), null };
-
-        processExprent(func.getLstOperands().get(1), varmaparrAnd);
-
-        // false map
-        varmaparr[1] = mergeMaps(varmaparr[varmaparr[1] == null ? 0 : 1], varmaparrAnd[varmaparrAnd[1] == null ? 0 : 1]);
-        // true map
-        varmaparr[0] = varmaparrAnd[0];
-
-        finished = true;
-        break;
-      case FunctionExprent.FUNCTION_COR:
-        processExprent(func.getLstOperands().get(0), varmaparr);
-
-        SFormsFastMapDirect[] varmaparrOr = new SFormsFastMapDirect[] { new SFormsFastMapDirect(varmaparr[varmaparr[1] == null ? 0 : 1]), null };
-
-        processExprent(func.getLstOperands().get(1), varmaparrOr);
-
-        // false map
-        varmaparr[1] = varmaparrOr[varmaparrOr[1] == null ? 0 : 1];
-        // true map
-        varmaparr[0] = mergeMaps(varmaparr[0], varmaparrOr[0]);
-
-        finished = true;
-      }
     }
 
     if (finished) {
@@ -242,12 +228,14 @@ public class SSAConstructorSparseEx {
         varassign.setVersion(nextver);
 
         setCurrentVar(varmap, varindex, nextver);
-      } else {
+      }
+      else {
         setCurrentVar(varmap, varindex, varassign.getVersion());
       }
-    } else if (expr.type == Exprent.EXPRENT_VAR) {
+    }
+    else if (expr.type == Exprent.EXPRENT_VAR) {
 
-      VarExprent vardest = (VarExprent) expr;
+      VarExprent vardest = (VarExprent)expr;
       Integer varindex = vardest.getIndex();
       FastSparseSet<Integer> vers = varmap.get(varindex);
 
@@ -255,8 +243,9 @@ public class SSAConstructorSparseEx {
       if (cardinality == 1) { // == 1
         // set version
         Integer it = vers.iterator().next();
-        vardest.setVersion(it.intValue());
-      } else if (cardinality == 2) { // size > 1
+        vardest.setVersion(it);
+      }
+      else if (cardinality == 2) { // size > 1
         Integer current_vers = vardest.getVersion();
 
         VarVersionPair currpaar = new VarVersionPair(varindex, current_vers);
@@ -264,7 +253,8 @@ public class SSAConstructorSparseEx {
           setCurrentVar(varmap, varindex, current_vers);
           // update phi node
           phi.get(currpaar).union(vers);
-        } else {
+        }
+        else {
           // increase version
           Integer nextver = getNextFreeVersion(varindex);
           // set version
@@ -281,9 +271,10 @@ public class SSAConstructorSparseEx {
   private Integer getNextFreeVersion(Integer var) {
     Integer nextver = lastversion.get(var);
     if (nextver == null) {
-      nextver = new Integer(1);
-    } else {
-      nextver = new Integer(nextver.intValue() + 1);
+      nextver = 1;
+    }
+    else {
+      nextver++;
     }
     lastversion.put(var, nextver);
     return nextver;
@@ -297,7 +288,8 @@ public class SSAConstructorSparseEx {
       SFormsFastMapDirect mapOut = getFilteredOutMap(node.id, pred.id, dgraph, node.id);
       if (mapNew.isEmpty()) {
         mapNew = mapOut.getCopy();
-      } else {
+      }
+      else {
         mergeMaps(mapNew, mapOut);
       }
     }
@@ -306,7 +298,8 @@ public class SSAConstructorSparseEx {
       SFormsFastMapDirect mapExtra = extraVarVersions.get(node.id);
       if (mapNew.isEmpty()) {
         mapNew = mapExtra.getCopy();
-      } else {
+      }
+      else {
         mergeMaps(mapNew, mapExtra);
       }
     }
@@ -322,7 +315,8 @@ public class SSAConstructorSparseEx {
       if (outNegVarVersions.containsKey(predid)) {
         mapNew = outNegVarVersions.get(predid).getCopy();
       }
-    } else if (outVarVersions.containsKey(predid)) {
+    }
+    else if (outVarVersions.containsKey(predid)) {
       mapNew = outVarVersions.get(predid).getCopy();
     }
 
@@ -350,31 +344,36 @@ public class SSAConstructorSparseEx {
         if (recFinally) {
           // recursion
           map = getFilteredOutMap(finwrap.entry, finwrap.source, dgraph, destid);
-        } else {
+        }
+        else {
           if (finwrap.entry.equals(dgraph.mapNegIfBranch.get(finwrap.source))) {
             map = outNegVarVersions.get(finwrap.source);
-          } else {
+          }
+          else {
             map = outVarVersions.get(finwrap.source);
           }
         }
 
         // false path?
-        boolean isFalsePath = true;
+        boolean isFalsePath;
 
         if (recFinally) {
           isFalsePath = !finwrap.destination.equals(nodeid);
-        } else {
+        }
+        else {
           isFalsePath = !setLongPathWrapper.contains(destid + "##" + finwrap.source);
         }
 
         if (isFalsePath) {
           mapNewTemp.complement(map);
-        } else {
+        }
+        else {
           if (mapTrueSource.isEmpty()) {
             if (map != null) {
               mapTrueSource = map.getCopy();
             }
-          } else {
+          }
+          else {
             mergeMaps(mapTrueSource, map);
           }
         }
@@ -383,7 +382,8 @@ public class SSAConstructorSparseEx {
       if (isExceptionMonitorExit) {
 
         mapNew = mapTrueSource;
-      } else {
+      }
+      else {
 
         mapNewTemp.union(mapTrueSource);
 
@@ -412,7 +412,8 @@ public class SSAConstructorSparseEx {
 
     if (map1 == null) {
       return map2 == null;
-    } else if (map2 == null) {
+    }
+    else if (map2 == null) {
       return false;
     }
 
@@ -440,26 +441,26 @@ public class SSAConstructorSparseEx {
     SFormsFastMapDirect map;
 
     switch (stat.type) {
-    case Statement.TYPE_CATCHALL:
-    case Statement.TYPE_TRYCATCH:
+      case Statement.TYPE_CATCHALL:
+      case Statement.TYPE_TRYCATCH:
 
-      List<VarExprent> lstVars;
-      if (stat.type == Statement.TYPE_CATCHALL) {
-        lstVars = ((CatchAllStatement) stat).getVars();
-      } else {
-        lstVars = ((CatchStatement) stat).getVars();
-      }
+        List<VarExprent> lstVars;
+        if (stat.type == Statement.TYPE_CATCHALL) {
+          lstVars = ((CatchAllStatement)stat).getVars();
+        }
+        else {
+          lstVars = ((CatchStatement)stat).getVars();
+        }
 
-      for (int i = 1; i < stat.getStats().size(); i++) {
-        int varindex = lstVars.get(i - 1).getIndex();
-        int version = getNextFreeVersion(varindex); // == 1
+        for (int i = 1; i < stat.getStats().size(); i++) {
+          int varindex = lstVars.get(i - 1).getIndex();
+          int version = getNextFreeVersion(varindex); // == 1
 
-        map = new SFormsFastMapDirect();
-        setCurrentVar(map, varindex, version);
+          map = new SFormsFastMapDirect();
+          setCurrentVar(map, varindex, version);
 
-        extraVarVersions.put(dgraph.nodes.getWithKey(flatthelper.getMapDestinationNodes().get(stat.getStats().get(i).id)[0]).id, map);
-        startVars.add(new VarVersionPair(varindex, version));
-      }
+          extraVarVersions.put(dgraph.nodes.getWithKey(flatthelper.getMapDestinationNodes().get(stat.getStats().get(i).id)[0]).id, map);
+        }
     }
 
     for (Statement st : stat.getStats()) {
@@ -482,15 +483,16 @@ public class SSAConstructorSparseEx {
       FastSparseSet<Integer> set = factory.spawnEmptySet();
       set.add(version);
       map.put(varindex, set);
-      startVars.add(new VarVersionPair(varindex, version));
 
       if (thisvar) {
         if (i == 0) {
           varindex++;
-        } else {
+        }
+        else {
           varindex += md.params[i - 1].stackSize;
         }
-      } else {
+      }
+      else {
         varindex += md.params[i].stackSize;
       }
     }
@@ -500,9 +502,5 @@ public class SSAConstructorSparseEx {
 
   public HashMap<VarVersionPair, FastSparseSet<Integer>> getPhi() {
     return phi;
-  }
-
-  public List<VarVersionPair> getStartVars() {
-    return startVars;
   }
 }

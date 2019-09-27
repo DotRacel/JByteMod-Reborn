@@ -1,27 +1,15 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
-import java.util.List;
-
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.TextBuffer;
+
+import java.util.List;
 
 public class AnnotationExprent extends Exprent {
   public static final int ANNOTATION_NORMAL = 1;
@@ -30,9 +18,9 @@ public class AnnotationExprent extends Exprent {
 
   private final String className;
   private final List<String> parNames;
-  private final List<Exprent> parValues;
+  private final List<? extends Exprent> parValues;
 
-  public AnnotationExprent(String className, List<String> parNames, List<Exprent> parValues) {
+  public AnnotationExprent(String className, List<String> parNames, List<? extends Exprent> parValues) {
     super(EXPRENT_ANNOTATION);
     this.className = className;
     this.parNames = parNames;
@@ -88,22 +76,23 @@ public class AnnotationExprent extends Exprent {
   public int getAnnotationType() {
     if (parNames.isEmpty()) {
       return ANNOTATION_MARKER;
-    } else if (parNames.size() == 1 && "value".equals(parNames.get(0))) {
+    }
+    else if (parNames.size() == 1 && "value".equals(parNames.get(0))) {
       return ANNOTATION_SINGLE_ELEMENT;
-    } else {
+    }
+    else {
       return ANNOTATION_NORMAL;
     }
   }
 
   @Override
   public boolean equals(Object o) {
-    if (o == this)
-      return true;
-    if (o == null || !(o instanceof AnnotationExprent))
-      return false;
+    if (o == this) return true;
+    if (!(o instanceof AnnotationExprent)) return false;
 
-    AnnotationExprent ann = (AnnotationExprent) o;
-    return className.equals(ann.className) && InterpreterUtil.equalLists(parNames, ann.parNames)
-        && InterpreterUtil.equalLists(parValues, ann.parValues);
+    AnnotationExprent ann = (AnnotationExprent)o;
+    return className.equals(ann.className) &&
+           InterpreterUtil.equalLists(parNames, ann.parNames) &&
+           InterpreterUtil.equalLists(parValues, ann.parValues);
   }
 }

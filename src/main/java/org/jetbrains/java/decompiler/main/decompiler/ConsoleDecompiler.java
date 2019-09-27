@@ -1,37 +1,5 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.decompiler;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.Fernflower;
@@ -40,19 +8,28 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
-public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
+public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] args) {
     if (args.length < 2) {
-      System.out.println("Usage: java -jar fernflower.jar [-<option>=<value>]* [<source>]+ <destination>\n"
-          + "Example: java -jar fernflower.jar -dgs=true c:\\my\\source\\ c:\\my.jar d:\\decompiled\\");
+      System.out.println(
+        "Usage: java -jar fernflower.jar [-<option>=<value>]* [<source>]+ <destination>\n" +
+        "Example: java -jar fernflower.jar -dgs=true c:\\my\\source\\ c:\\my.jar d:\\decompiled\\");
       return;
     }
 
     Map<String, Object> mapOptions = new HashMap<>();
-    List<File> lstSources = new ArrayList<>();
-    List<File> lstLibraries = new ArrayList<>();
+    List<File> sources = new ArrayList<>();
+    List<File> libraries = new ArrayList<>();
 
     boolean isOption = true;
     for (int i = 0; i < args.length - 1; ++i) { // last parameter - destination
@@ -62,23 +39,26 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
         String value = arg.substring(5);
         if ("true".equalsIgnoreCase(value)) {
           value = "1";
-        } else if ("false".equalsIgnoreCase(value)) {
+        }
+        else if ("false".equalsIgnoreCase(value)) {
           value = "0";
         }
 
         mapOptions.put(arg.substring(1, 4), value);
-      } else {
+      }
+      else {
         isOption = false;
 
         if (arg.startsWith("-e=")) {
-          addPath(lstLibraries, arg.substring(3));
-        } else {
-          addPath(lstSources, arg);
+          addPath(libraries, arg.substring(3));
+        }
+        else {
+          addPath(sources, arg);
         }
       }
     }
 
-    if (lstSources.isEmpty()) {
+    if (sources.isEmpty()) {
       System.out.println("error: no sources given");
       return;
     }
@@ -92,22 +72,23 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     PrintStreamLogger logger = new PrintStreamLogger(System.out);
     ConsoleDecompiler decompiler = new ConsoleDecompiler(destination, mapOptions, logger);
 
-    for (File source : lstSources) {
-      decompiler.addSpace(source, true);
+    for (File source : sources) {
+      decompiler.addSource(source);
     }
-    for (File library : lstLibraries) {
-      decompiler.addSpace(library, false);
+    for (File library : libraries) {
+      decompiler.addLibrary(library);
     }
 
     decompiler.decompileContext();
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private static void addPath(List<File> list, String path) {
+  private static void addPath(List<? super File> list, String path) {
     File file = new File(path);
     if (file.exists()) {
       list.add(file);
-    } else {
+    }
+    else {
       System.out.println("warn: missing '" + path + "', ignored");
     }
   }
@@ -117,29 +98,29 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
   // *******************************************************************
 
   private final File root;
-  private final Fernflower fernflower;
+  private final Fernflower engine;
   private final Map<String, ZipOutputStream> mapArchiveStreams = new HashMap<>();
   private final Map<String, Set<String>> mapArchiveEntries = new HashMap<>();
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  public ConsoleDecompiler(File destination, Map<String, Object> options) {
-    this(destination, options, new PrintStreamLogger(System.out));
-  }
-
   protected ConsoleDecompiler(File destination, Map<String, Object> options, IFernflowerLogger logger) {
     root = destination;
-    fernflower = new Fernflower(this, this, options, logger);
+    engine = new Fernflower(this, this, options, logger);
   }
 
-  public void addSpace(File file, boolean isOwn) {
-    fernflower.getStructContext().addSpace(file, isOwn);
+  public void addSource(File source) {
+    engine.addSource(source);
+  }
+
+  public void addLibrary(File library) {
+    engine.addLibrary(library);
   }
 
   public void decompileContext() {
     try {
-      fernflower.decompileContext();
-    } finally {
-      fernflower.clearContext();
+      engine.decompileContext();
+    }
+    finally {
+      engine.clearContext();
     }
   }
 
@@ -152,11 +133,11 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     File file = new File(externalPath);
     if (internalPath == null) {
       return InterpreterUtil.getBytes(file);
-    } else {
+    }
+    else {
       try (ZipFile archive = new ZipFile(file)) {
         ZipEntry entry = archive.getEntry(internalPath);
-        if (entry == null)
-          throw new IOException("Entry not found: " + internalPath);
+        if (entry == null) throw new IOException("Entry not found: " + internalPath);
         return InterpreterUtil.getBytes(archive, entry);
       }
     }
@@ -182,7 +163,8 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
   public void copyFile(String source, String path, String entryName) {
     try {
       InterpreterUtil.copyFile(new File(source), new File(getAbsolutePath(path), entryName));
-    } catch (IOException ex) {
+    }
+    catch (IOException ex) {
       DecompilerContext.getLogger().writeMessage("Cannot copy " + source + " to " + entryName, ex);
     }
   }
@@ -190,9 +172,10 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
   @Override
   public void saveClassFile(String path, String qualifiedName, String entryName, String content, int[] mapping) {
     File file = new File(getAbsolutePath(path), entryName);
-    try (Writer out = new OutputStreamWriter(new FileOutputStream(file), "UTF8")) {
+    try (Writer out = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
       out.write(content);
-    } catch (IOException ex) {
+    }
+    catch (IOException ex) {
       DecompilerContext.getLogger().writeMessage("Cannot write class file " + file, ex);
     }
   }
@@ -206,10 +189,10 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
       }
 
       FileOutputStream fileStream = new FileOutputStream(file);
-      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
       ZipOutputStream zipStream = manifest != null ? new JarOutputStream(fileStream, manifest) : new ZipOutputStream(fileStream);
       mapArchiveStreams.put(file.getPath(), zipStream);
-    } catch (IOException ex) {
+    }
+    catch (IOException ex) {
       DecompilerContext.getLogger().writeMessage("Cannot create archive " + file, ex);
     }
   }
@@ -236,7 +219,8 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
           InterpreterUtil.copyStream(in, out);
         }
       }
-    } catch (IOException ex) {
+    }
+    catch (IOException ex) {
       String message = "Cannot copy entry " + entryName + " from " + source + " to " + file;
       DecompilerContext.getLogger().writeMessage(message, ex);
     }
@@ -254,19 +238,17 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
       ZipOutputStream out = mapArchiveStreams.get(file);
       out.putNextEntry(new ZipEntry(entryName));
       if (content != null) {
-        out.write(content.getBytes("UTF-8"));
+        out.write(content.getBytes(StandardCharsets.UTF_8));
       }
-    } catch (IOException ex) {
+    }
+    catch (IOException ex) {
       String message = "Cannot write entry " + entryName + " to " + file;
       DecompilerContext.getLogger().writeMessage(message, ex);
     }
   }
 
   private boolean checkEntry(String entryName, String file) {
-    Set<String> set = mapArchiveEntries.get(file);
-    if (set == null) {
-      mapArchiveEntries.put(file, set = new HashSet<>());
-    }
+    Set<String> set = mapArchiveEntries.computeIfAbsent(file, k -> new HashSet<>());
 
     boolean added = set.add(entryName);
     if (!added) {
@@ -282,7 +264,8 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     try {
       mapArchiveEntries.remove(file);
       mapArchiveStreams.remove(file).close();
-    } catch (IOException ex) {
+    }
+    catch (IOException ex) {
       DecompilerContext.getLogger().writeMessage("Cannot close " + file, IFernflowerLogger.Severity.WARN);
     }
   }

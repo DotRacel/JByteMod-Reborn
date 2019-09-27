@@ -1,28 +1,13 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.gen;
+
+import org.jetbrains.java.decompiler.code.CodeConstants;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.jetbrains.java.decompiler.code.CodeConstants;
-
 public class MethodDescriptor {
-
   public final VarType[] params;
   public final VarType ret;
 
@@ -46,20 +31,20 @@ public class MethodDescriptor {
       int indexFrom = -1, ind, len = parameters.length(), index = 0;
       while (index < len) {
         switch (parameters.charAt(index)) {
-        case '[':
-          if (indexFrom < 0) {
-            indexFrom = index;
-          }
-          break;
-        case 'L':
-          ind = parameters.indexOf(";", index);
-          lst.add(parameters.substring(indexFrom < 0 ? index : indexFrom, ind + 1));
-          index = ind;
-          indexFrom = -1;
-          break;
-        default:
-          lst.add(parameters.substring(indexFrom < 0 ? index : indexFrom, index + 1));
-          indexFrom = -1;
+          case '[':
+            if (indexFrom < 0) {
+              indexFrom = index;
+            }
+            break;
+          case 'L':
+            ind = parameters.indexOf(";", index);
+            lst.add(parameters.substring(indexFrom < 0 ? index : indexFrom, ind + 1));
+            index = ind;
+            indexFrom = -1;
+            break;
+          default:
+            lst.add(parameters.substring(indexFrom < 0 ? index : indexFrom, index + 1));
+            indexFrom = -1;
         }
         index++;
       }
@@ -68,7 +53,8 @@ public class MethodDescriptor {
       for (int i = 0; i < lst.size(); i++) {
         params[i] = new VarType(lst.get(i));
       }
-    } else {
+    }
+    else {
       params = VarType.EMPTY_ARRAY;
     }
 
@@ -91,7 +77,8 @@ public class MethodDescriptor {
           updated = true;
         }
       }
-    } else {
+    }
+    else {
       newParams = VarType.EMPTY_ARRAY;
     }
 
@@ -126,12 +113,10 @@ public class MethodDescriptor {
 
   @Override
   public boolean equals(Object o) {
-    if (o == this)
-      return true;
-    if (o == null || !(o instanceof MethodDescriptor))
-      return false;
+    if (o == this) return true;
+    if (!(o instanceof MethodDescriptor)) return false;
 
-    MethodDescriptor md = (MethodDescriptor) o;
+    MethodDescriptor md = (MethodDescriptor)o;
     return ret.equals(md.ret) && Arrays.equals(params, md.params);
   }
 

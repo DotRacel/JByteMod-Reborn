@@ -1,37 +1,17 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
 
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.DummyExitStatement;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 public class ExitHelper {
   public static boolean condenseExits(RootStatement root) {
@@ -75,7 +55,8 @@ public class ExitHelper {
           }
         }
       }
-    } while (found);
+    }
+    while (found);
   }
 
   private static int integrateExits(Statement stat) {
@@ -99,15 +80,14 @@ public class ExitHelper {
         }
       }
 
-      switch (stat.type) {
-      case Statement.TYPE_IF:
-        IfStatement ifst = (IfStatement) stat;
+      if (stat.type == Statement.TYPE_IF) {
+        IfStatement ifst = (IfStatement)stat;
         if (ifst.getIfstat() == null) {
           StatEdge ifedge = ifst.getIfEdge();
           dest = isExitEdge(ifedge);
           if (dest != null) {
-            BasicBlockStatement bstat = new BasicBlockStatement(
-                new BasicBlock(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
+            BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
+              DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
             bstat.setExprents(DecHelper.copyExprentList(dest.getExprents()));
 
             ifst.getFirst().removeSuccessor(ifedge);
@@ -128,18 +108,21 @@ public class ExitHelper {
       }
     }
 
-    if (stat.getAllSuccessorEdges().size() == 1 && stat.getAllSuccessorEdges().get(0).getType() == StatEdge.TYPE_BREAK
-        && stat.getLabelEdges().isEmpty()) {
+
+    if (stat.getAllSuccessorEdges().size() == 1 &&
+        stat.getAllSuccessorEdges().get(0).getType() == StatEdge.TYPE_BREAK &&
+        stat.getLabelEdges().isEmpty()) {
       Statement parent = stat.getParent();
-      if (stat != parent.getFirst() || (parent.type != Statement.TYPE_IF && parent.type != Statement.TYPE_SWITCH)) {
+      if (stat != parent.getFirst() || (parent.type != Statement.TYPE_IF &&
+                                        parent.type != Statement.TYPE_SWITCH)) {
 
         StatEdge destedge = stat.getAllSuccessorEdges().get(0);
         dest = isExitEdge(destedge);
         if (dest != null) {
           stat.removeSuccessor(destedge);
 
-          BasicBlockStatement bstat = new BasicBlockStatement(
-              new BasicBlock(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
+          BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
+            DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
           bstat.setExprents(DecHelper.copyExprentList(dest.getExprents()));
 
           StatEdge oldexitedge = dest.getAllSuccessorEdges().get(0);
@@ -164,7 +147,8 @@ public class ExitHelper {
           stat.addSuccessor(new StatEdge(StatEdge.TYPE_REGULAR, stat, bstat));
 
           for (StatEdge edge : dest.getAllPredecessorEdges()) {
-            if (!edge.explicit && stat.containsStatementStrict(edge.getSource()) && MergeHelper.isDirectPath(edge.getSource().getParent(), bstat)) {
+            if (!edge.explicit && stat.containsStatementStrict(edge.getSource()) &&
+                MergeHelper.isDirectPath(edge.getSource().getParent(), bstat)) {
 
               dest.removePredecessor(edge);
               edge.getSource().changeEdgeNode(Statement.DIRECTION_FORWARD, edge, bstat);
@@ -208,11 +192,13 @@ public class ExitHelper {
         if (ed.getType() == StatEdge.TYPE_REGULAR) {
           Statement source = ed.getSource();
 
-          if (source.type == Statement.TYPE_BASICBLOCK || (source.type == Statement.TYPE_IF && ((IfStatement) source).iftype == IfStatement.IFTYPE_IF)
-              || (source.type == Statement.TYPE_DO && ((DoStatement) source).getLooptype() != DoStatement.LOOP_DO)) {
+          if (source.type == Statement.TYPE_BASICBLOCK || (source.type == Statement.TYPE_IF &&
+                                                           ((IfStatement)source).iftype == IfStatement.IFTYPE_IF) ||
+              (source.type == Statement.TYPE_DO && ((DoStatement)source).getLooptype() != DoStatement.LOOP_DO)) {
             return false;
           }
-        } else {
+        }
+        else {
           return false;
         }
       }
@@ -221,9 +207,7 @@ public class ExitHelper {
     return true;
   }
 
-  public static boolean removeRedundantReturns(RootStatement root) {
-    boolean res = false;
-
+  public static void removeRedundantReturns(RootStatement root) {
     DummyExitStatement dummyExit = root.getDummyExit();
 
     for (StatEdge edge : dummyExit.getAllPredecessorEdges()) {
@@ -233,18 +217,15 @@ public class ExitHelper {
         if (lstExpr != null && !lstExpr.isEmpty()) {
           Exprent expr = lstExpr.get(lstExpr.size() - 1);
           if (expr.type == Exprent.EXPRENT_EXIT) {
-            ExitExprent ex = (ExitExprent) expr;
+            ExitExprent ex = (ExitExprent)expr;
             if (ex.getExitType() == ExitExprent.EXIT_RETURN && ex.getValue() == null) {
               // remove redundant return
               dummyExit.addBytecodeOffsets(ex.bytecode);
               lstExpr.remove(lstExpr.size() - 1);
-              res = true;
             }
           }
         }
       }
     }
-
-    return res;
   }
 }

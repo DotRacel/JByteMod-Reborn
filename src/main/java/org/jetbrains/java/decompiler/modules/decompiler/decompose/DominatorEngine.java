@@ -1,31 +1,18 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.decompose;
-
-import java.util.List;
 
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
+
+import java.util.List;
 
 public class DominatorEngine {
 
   private final Statement statement;
 
   private final VBStyleCollection<Integer, Integer> colOrderedIDoms = new VBStyleCollection<>();
+
 
   public DominatorEngine(Statement statement) {
     this.statement = statement;
@@ -46,7 +33,8 @@ public class DominatorEngine {
 
     if (key1 == null) {
       return key2;
-    } else if (key2 == null) {
+    }
+    else if (key2 == null) {
       return key1;
     }
 
@@ -57,7 +45,8 @@ public class DominatorEngine {
       if (index1 > index2) {
         key1 = orderedIDoms.getWithKey(key1);
         index1 = orderedIDoms.getIndexByKey(key1);
-      } else {
+      }
+      else {
         key2 = orderedIDoms.getWithKey(key2);
         index2 = orderedIDoms.getIndexByKey(key2);
       }
@@ -84,8 +73,7 @@ public class DominatorEngine {
         Statement stat = statement.getStats().getWithKey(id);
         Integer idom = null;
 
-        List<StatEdge> preEdges = stat.getAllPredecessorEdges();
-        for (StatEdge edge : preEdges) {
+        for (StatEdge edge : stat.getAllPredecessorEdges()) {
           if (colOrderedIDoms.getWithKey(edge.getSource().id) != null) {
             idom = getCommonIDom(idom, edge.getSource().id, colOrderedIDoms);
           }
@@ -115,7 +103,8 @@ public class DominatorEngine {
 
       if (idom.equals(node)) {
         return false; // root node
-      } else {
+      }
+      else {
         node = idom;
       }
     }

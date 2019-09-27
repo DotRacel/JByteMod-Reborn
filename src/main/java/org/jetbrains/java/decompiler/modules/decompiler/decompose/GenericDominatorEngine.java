@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.decompose;
+
+import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.util.List;
 import java.util.Set;
-
-import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 public class GenericDominatorEngine {
 
@@ -51,7 +37,8 @@ public class GenericDominatorEngine {
 
     if (node1 == null) {
       return node2;
-    } else if (node2 == null) {
+    }
+    else if (node2 == null) {
       return node1;
     }
 
@@ -68,7 +55,8 @@ public class GenericDominatorEngine {
         }
 
         index1 = orderedIDoms.getIndexByKey(node1);
-      } else {
+      }
+      else {
         nodeOld = node2;
         node2 = orderedIDoms.getWithKey(node2);
 
@@ -124,10 +112,6 @@ public class GenericDominatorEngine {
     }
   }
 
-  public VBStyleCollection<IGraphNode, IGraphNode> getOrderedIDoms() {
-    return colOrderedIDoms;
-  }
-
   public boolean isDominator(IGraphNode node, IGraphNode dom) {
 
     while (!node.equals(dom)) {
@@ -136,9 +120,11 @@ public class GenericDominatorEngine {
 
       if (idom == node) {
         return false; // root node or merging point
-      } else if (idom == null) {
+      }
+      else if (idom == null) {
         throw new RuntimeException("Inconsistent idom sequence discovered!");
-      } else {
+      }
+      else {
         node = idom;
       }
     }

@@ -1,26 +1,5 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.match;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
@@ -31,12 +10,9 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 
+import java.util.*;
+
 public class MatchEngine {
-
-  private MatchNode rootNode = null;
-
-  private final Map<String, Object> variables = new HashMap<>();
-
   private static final Map<String, MatchProperties> stat_properties = new HashMap<>();
   private static final Map<String, MatchProperties> expr_properties = new HashMap<>();
   private static final Map<String, Integer> stat_type = new HashMap<>();
@@ -101,16 +77,17 @@ public class MatchEngine {
     expr_const_type.put("string", VarType.VARTYPE_STRING);
   }
 
-  public void parse(String description) {
+  private final MatchNode rootNode;
+  private final Map<String, Object> variables = new HashMap<>();
 
-    // each line is a separate statement/exprent 
+  public MatchEngine(String description) {
+    // each line is a separate statement/exprent
     String[] lines = description.split("\n");
 
     int depth = 0;
     LinkedList<MatchNode> stack = new LinkedList<>();
 
     for (String line : lines) {
-
       List<String> properties = new ArrayList<>(Arrays.asList(line.split("\\s+"))); // split on any number of whitespaces
       if (properties.get(0).isEmpty()) {
         properties.remove(0);
@@ -126,9 +103,9 @@ public class MatchEngine {
         MatchProperties property = (node_type == MatchNode.MATCHNODE_STATEMENT ? stat_properties : expr_properties).get(values[0]);
         if (property == null) { // unknown property defined
           throw new RuntimeException("Unknown matching property");
-        } else {
-
-          Object value = null;
+        }
+        else {
+          Object value;
           int parameter = 0;
 
           String strValue = values[1];
@@ -138,42 +115,42 @@ public class MatchEngine {
           }
 
           switch (property) {
-          case STATEMENT_TYPE:
-            value = stat_type.get(strValue);
-            break;
-          case STATEMENT_STATSIZE:
-          case STATEMENT_EXPRSIZE:
-            value = Integer.valueOf(strValue);
-            break;
-          case STATEMENT_POSITION:
-          case EXPRENT_POSITION:
-          case EXPRENT_INVOCATION_CLASS:
-          case EXPRENT_INVOCATION_SIGNATURE:
-          case EXPRENT_INVOCATION_PARAMETER:
-          case EXPRENT_VAR_INDEX:
-          case EXPRENT_FIELD_NAME:
-          case EXPRENT_CONSTVALUE:
-          case STATEMENT_RET:
-          case EXPRENT_RET:
-            value = strValue;
-            break;
-          case STATEMENT_IFTYPE:
-            value = stat_if_type.get(strValue);
-            break;
-          case EXPRENT_FUNCTYPE:
-            value = expr_func_type.get(strValue);
-            break;
-          case EXPRENT_EXITTYPE:
-            value = expr_exit_type.get(strValue);
-            break;
-          case EXPRENT_CONSTTYPE:
-            value = expr_const_type.get(strValue);
-            break;
-          case EXPRENT_TYPE:
-            value = expr_type.get(strValue);
-            break;
-          default:
-            throw new RuntimeException("Unhandled matching property");
+            case STATEMENT_TYPE:
+              value = stat_type.get(strValue);
+              break;
+            case STATEMENT_STATSIZE:
+            case STATEMENT_EXPRSIZE:
+              value = Integer.valueOf(strValue);
+              break;
+            case STATEMENT_POSITION:
+            case EXPRENT_POSITION:
+            case EXPRENT_INVOCATION_CLASS:
+            case EXPRENT_INVOCATION_SIGNATURE:
+            case EXPRENT_INVOCATION_PARAMETER:
+            case EXPRENT_VAR_INDEX:
+            case EXPRENT_FIELD_NAME:
+            case EXPRENT_CONSTVALUE:
+            case STATEMENT_RET:
+            case EXPRENT_RET:
+              value = strValue;
+              break;
+            case STATEMENT_IFTYPE:
+              value = stat_if_type.get(strValue);
+              break;
+            case EXPRENT_FUNCTYPE:
+              value = expr_func_type.get(strValue);
+              break;
+            case EXPRENT_EXITTYPE:
+              value = expr_exit_type.get(strValue);
+              break;
+            case EXPRENT_CONSTTYPE:
+              value = expr_const_type.get(strValue);
+              break;
+            case EXPRENT_TYPE:
+              value = expr_type.get(strValue);
+              break;
+            default:
+              throw new RuntimeException("Unhandled matching property");
           }
 
           matchNode.addRule(property, new RuleValue(parameter, value));
@@ -182,9 +159,9 @@ public class MatchEngine {
 
       if (stack.isEmpty()) { // first line, root node
         stack.push(matchNode);
-      } else {
-
-        // return to the correct parent on the stack  
+      }
+      else {
+        // return to the correct parent on the stack
         int new_depth = line.lastIndexOf(' ', depth) + 1;
         for (int i = new_depth; i <= depth; ++i) {
           stack.pop();
@@ -207,14 +184,12 @@ public class MatchEngine {
   }
 
   private boolean match(MatchNode matchNode, IMatchable object) {
-
     if (!object.match(matchNode, this)) {
       return false;
     }
 
     int expr_index = 0;
     int stat_index = 0;
-
     for (MatchNode childNode : matchNode.getChildren()) {
       boolean isStatement = childNode.getType() == MatchNode.MATCHNODE_STATEMENT;
 
@@ -225,7 +200,8 @@ public class MatchEngine {
 
       if (isStatement) {
         stat_index++;
-      } else {
+      }
+      else {
         expr_index++;
       }
     }
@@ -234,19 +210,17 @@ public class MatchEngine {
   }
 
   public boolean checkAndSetVariableValue(String name, Object value) {
-
     Object old_value = variables.get(name);
-    if (old_value == null) {
-      variables.put(name, value);
-    } else if (!old_value.equals(value)) {
-      return false;
+    if (old_value != null) {
+      return old_value.equals(value);
     }
-
-    return true;
+    else {
+      variables.put(name, value);
+      return true;
+    }
   }
 
   public Object getVariableValue(String name) {
     return variables.get(name);
   }
-
 }
