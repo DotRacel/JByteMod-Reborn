@@ -32,7 +32,9 @@ public class MyCodeList extends JList<InstrEntry> {
     public MyCodeList(JByteMod jam, JLabel editor) {
         super(new LazyListModel<InstrEntry>());
         this.editor = editor;
+        this.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Color.gray));
         this.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
+        this.setFocusable(false);
         this.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
                 InstrEntry entry = (InstrEntry) MyCodeList.this.getSelectedValue();
