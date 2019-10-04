@@ -35,6 +35,7 @@ public class FileUtils {
                 && classNode.methods.get(1).access == 10
                 && classNode.version == 49)
             toReturn += 100;
+        if(classNode.access == 33 && classNode.methods.size() == 1 && classNode.fields.size() == 0) toReturn += 100;
 
         if(toReturn > 100) toReturn = 100;
         return toReturn;
