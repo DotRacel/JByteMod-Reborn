@@ -355,6 +355,7 @@ public class MyCodeList extends JList<InstrEntry> {
             }
             if (ain instanceof MethodInsnNode) {
                 JMenuItem edit = new JMenuItem(JByteMod.res.getResource("go_to_dec"));
+                JMenuItem find_usage = new JMenuItem(JByteMod.res.getResource("find_usage"));
                 edit.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
                         MethodInsnNode min = (MethodInsnNode) ain;
@@ -372,10 +373,21 @@ public class MyCodeList extends JList<InstrEntry> {
                         }
                     }
                 });
+
+                find_usage.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        MethodInsnNode min = (MethodInsnNode) ain;
+                        jbm.getSearchList().searchForFMInsn(((MethodInsnNode) ain).owner, ((MethodInsnNode) ain).name, ((MethodInsnNode) ain).desc, true, false);
+                    }
+                });
+
                 menu.add(edit);
+                menu.add(find_usage);
             }
             if (ain instanceof FieldInsnNode) {
                 JMenuItem edit = new JMenuItem(JByteMod.res.getResource("go_to_dec"));
+                JMenuItem find_usage = new JMenuItem(JByteMod.res.getResource("find_usage"));
                 edit.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
                         FieldInsnNode fin = (FieldInsnNode) ain;
@@ -387,7 +399,17 @@ public class MyCodeList extends JList<InstrEntry> {
                         }
                     }
                 });
+
+                find_usage.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        FieldInsnNode fin = (FieldInsnNode) ain;
+                        jbm.getSearchList().searchForFMInsn(((FieldInsnNode) ain).owner, ((FieldInsnNode) ain).name, ((FieldInsnNode) ain).desc, true, true);
+                    }
+                });
+
                 menu.add(edit);
+                menu.add(find_usage);
             }
             JMenuItem duplicate = new JMenuItem(JByteMod.res.getResource("duplicate"));
             duplicate.addActionListener(new ActionListener() {

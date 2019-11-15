@@ -71,6 +71,8 @@
    <string name="remove_lines">Remove lines</string>
    <string name="remove_dead_code">Remove unreachable code</string>
    <string name="add_method">Add method</string>
+   <string name="find_usage">Find usages</string>
+
    <string name="generate_frames">Generate frames</string>
    <string name="reload">Reload</string>
    <string name="close">Close</string>
