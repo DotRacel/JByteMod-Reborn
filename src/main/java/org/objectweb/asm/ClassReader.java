@@ -27,6 +27,8 @@
 // THE POSSIBILITY OF SUCH DAMAGE.
 package org.objectweb.asm;
 
+import com.sun.org.apache.bcel.internal.classfile.ClassFormatException;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -1281,7 +1283,9 @@ public class ClassReader {
     // Visit the Code attribute.
     if (codeOffset != 0) {
       methodVisitor.visitCode();
-      readCode(methodVisitor, context, codeOffset);
+      try{
+        readCode(methodVisitor, context, codeOffset);
+      }catch(Exception ignored){}
     }
 
     // Visit the end of the method.

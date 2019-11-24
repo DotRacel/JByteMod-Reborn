@@ -11,6 +11,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.tools.zip.ZipEntry;
 import org.apache.tools.zip.ZipFile;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
 import javax.swing.*;
@@ -21,6 +24,9 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.objectweb.asm.ClassReader.SKIP_CODE;
+import static org.objectweb.asm.ClassReader.SKIP_DEBUG;
 
 public class LoadTask extends SwingWorker<Void, Integer> {
 
@@ -63,6 +69,7 @@ public class LoadTask extends SwingWorker<Void, Integer> {
         }
         ClassReader cr = new ClassReader(bytes);
         ClassNode cn = new ClassNode();
+
         cr.accept(cn, ClassReader.EXPAND_FRAMES);
         return cn;
     }
