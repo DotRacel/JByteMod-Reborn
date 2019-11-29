@@ -10,6 +10,33 @@ import org.objectweb.asm.tree.analysis.Frame;
 import static org.objectweb.asm.Opcodes.*;
 
 public class MethodUtils {
+    public static MethodNode copy(MethodNode mn){
+        MethodNode toReturn = new MethodNode();
+        toReturn.access = mn.access;
+        toReturn.maxLocals = mn.maxLocals;
+        toReturn.maxStack = mn.maxStack;
+        toReturn.desc = mn.desc;
+        toReturn.instructions = mn.instructions;
+        toReturn.name = mn.name;
+        toReturn.exceptions = mn.exceptions;
+        toReturn.tryCatchBlocks = mn.tryCatchBlocks;
+        toReturn.invisibleAnnotations = mn.invisibleAnnotations;
+        toReturn.localVariables = mn.localVariables;
+        toReturn.signature = mn.signature;
+        toReturn.invisibleLocalVariableAnnotations = mn.invisibleLocalVariableAnnotations;
+        toReturn.invisibleParameterAnnotations = mn.invisibleParameterAnnotations;
+        toReturn.invisibleTypeAnnotations = mn.invisibleTypeAnnotations;
+        return toReturn;
+    }
+
+    public static boolean equalName(ClassNode classNode, String name){
+        for (MethodNode method : classNode.methods) {
+            if(method.name.equals(name)) return true;
+        }
+
+        return false;
+    }
+
     public static void clear(MethodNode mn) {
         mn.instructions.clear();
         mn.instructions.add(generateReturn(mn.desc));

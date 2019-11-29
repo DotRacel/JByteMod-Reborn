@@ -1,5 +1,6 @@
 package me.grax.jbytemod.ui;
 
+import jdk.nashorn.internal.scripts.JO;
 import me.grax.jbytemod.JByteMod;
 import me.grax.jbytemod.JarArchive;
 import me.grax.jbytemod.ui.dialogue.InsnEditDialogue;
@@ -183,6 +184,21 @@ public class ClassTree extends JTree implements IDropUser {
                                 }
                             });
                             menu.add(edit);
+                            JMenuItem duplicate = new JMenuItem(JByteMod.res.getResource("duplicate"));
+                            duplicate.addActionListener(new ActionListener() {
+                                public void actionPerformed(ActionEvent e) {
+                                    MethodNode dup = MethodUtils.copy(mn);
+                                    String name = JOptionPane.showInputDialog(null, "Duplicated method name ?", "Rename", JOptionPane.QUESTION_MESSAGE);
+                                    if(MethodUtils.equalName(cn, name)){
+                                        JOptionPane.showMessageDialog(null, "The name is already existed.", "Existed Name!", JOptionPane.WARNING_MESSAGE);
+                                        return;
+                                    }
+                                    dup.name = name;
+                                    cn.methods.add(dup);
+                                    jbm.getJarTree().refreshTree(jbm.getFile());
+                                }
+                            });
+                            menu.add(duplicate);
                             JMenuItem search = new JMenuItem(JByteMod.res.getResource("search"));
                             search.addActionListener(new ActionListener() {
                                 public void actionPerformed(ActionEvent e) {
