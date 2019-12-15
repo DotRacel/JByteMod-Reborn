@@ -868,6 +868,9 @@ public class MyMenuBar extends JMenuBar {
             int result = jfc.showSaveDialog(this);
             if (result == JFileChooser.APPROVE_OPTION) {
                 File output = jfc.getSelectedFile();
+                if(!output.getAbsolutePath().endsWith(".jar")) {
+                    output = new File(output.getAbsolutePath() + ".jar");
+                }
                 this.lastFile = output;
                 JByteMod.LOGGER.log("Selected output file: " + output.getAbsolutePath());
                 jbm.saveFile(output);
