@@ -1,6 +1,7 @@
 package me.grax.jbytemod.utils;
 
 import me.grax.jbytemod.JByteMod;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.tree.analysis.Analyzer;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
@@ -39,6 +40,10 @@ public class MethodUtils {
 
     public static void clear(MethodNode mn) {
         mn.instructions.clear();
+        if(mn.name.equals("init")){
+            mn.instructions.add(new VarInsnNode(ALOAD, 0));
+            mn.instructions.add(new MethodInsnNode(INVOKESPECIAL, "java/lang/Object", "<init>", "()V"));
+        }
         mn.instructions.add(generateReturn(mn.desc));
         mn.tryCatchBlocks.clear();
         mn.localVariables.clear();
