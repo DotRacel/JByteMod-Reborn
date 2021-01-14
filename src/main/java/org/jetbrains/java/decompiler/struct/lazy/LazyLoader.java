@@ -133,9 +133,6 @@ public class LazyLoader {
     public final String externalPath;
     public final String internalPath;
 
-    public static final int CLASS = 1;
-    public static final int ENTRY = 2;
-
     public Link(String externalPath, String internalPath) {
       this.externalPath = externalPath;
       this.internalPath = internalPath;
