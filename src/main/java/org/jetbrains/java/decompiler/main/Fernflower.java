@@ -18,6 +18,10 @@ import java.util.Locale;
 import java.util.Map;
 
 public class Fernflower implements IDecompiledData {
+  public StructContext getStructContext() {
+    return structContext;
+  }
+
   private final StructContext structContext;
   private final ClassesProcessor classProcessor;
   private final IIdentifierRenamer helper;

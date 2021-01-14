@@ -37,6 +37,22 @@ public class StructContext {
     return classes.get(name);
   }
 
+  public LazyLoader getLoader() {
+    return loader;
+  }
+
+  public IResultSaver getSaver() {
+    return saver;
+  }
+
+  public IDecompiledData getDecompiledData() {
+    return decompiledData;
+  }
+
+  public Map<String, ContextUnit> getUnits() {
+    return units;
+  }
+
   public void reloadContext() throws IOException {
     for (ContextUnit unit : units.values()) {
       for (StructClass cl : unit.getClasses()) {
