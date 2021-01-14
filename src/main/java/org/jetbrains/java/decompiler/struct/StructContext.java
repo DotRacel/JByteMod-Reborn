@@ -18,10 +18,10 @@ import java.util.zip.ZipFile;
 
 public class StructContext {
 
-  public final IResultSaver saver;
-  public final IDecompiledData decompiledData;
-  public final LazyLoader loader;
-  public final Map<String, ContextUnit> units = new HashMap<>();
+  private final IResultSaver saver;
+  private final IDecompiledData decompiledData;
+  private final LazyLoader loader;
+  private final Map<String, ContextUnit> units = new HashMap<>();
   private final Map<String, StructClass> classes = new HashMap<>();
 
   public StructContext(IResultSaver saver, IDecompiledData decompiledData, LazyLoader loader) {
@@ -35,6 +35,22 @@ public class StructContext {
 
   public StructClass getClass(String name) {
     return classes.get(name);
+  }
+
+  public LazyLoader getLoader() {
+    return loader;
+  }
+
+  public IResultSaver getSaver() {
+    return saver;
+  }
+
+  public IDecompiledData getDecompiledData() {
+    return decompiledData;
+  }
+
+  public Map<String, ContextUnit> getUnits() {
+    return units;
   }
 
   public void reloadContext() throws IOException {

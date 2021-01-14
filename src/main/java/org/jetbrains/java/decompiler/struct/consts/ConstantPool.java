@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.consts;
 
-import me.grax.jbytemod.JByteMod;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
@@ -93,11 +92,7 @@ public class ConstantPool implements NewClassNameBuilder {
     for (BitSet pass : nextPass) {
       int idx = 0;
       while ((idx = pass.nextSetBit(idx + 1)) > 0) {
-        try{
-          pool.get(idx).resolveConstant(this);
-        }catch(Exception e){
-          JByteMod.LOGGER.println("Failed to resolve a complex pool element, bypassed.");
-        }
+        pool.get(idx).resolveConstant(this);
       }
     }
 
